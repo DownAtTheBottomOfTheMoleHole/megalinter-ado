@@ -74,19 +74,20 @@ jobs:
         working-directory: megalinter
 
       - name: Build with tsc
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: npx tsc
         working-directory: megalinter
 
       - name: Install tfx-cli
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: npm install -g tfx-cli
 
       - name: Package Private Extension
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: tfx extension create --manifest-globs vss-extension.json
+
       - name: Publish private Extension
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: |
           tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --pat ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
 
