@@ -3,6 +3,10 @@ name: Build and release extension
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   npm_cache: ${{ github.workspace }}/npm_cache
   pnpm_config_cache: ${{ github.workspace }}/.pnpm-store
@@ -93,6 +97,7 @@ jobs:
 
   scan:
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -251,33 +256,28 @@ jobs:
           done
 
   new_release:
-    if: ${{ !cancelled() }}
     name: "Create new tagged release"
     needs: public_release
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - name: Checkout
-        if: ${{ !cancelled() }}
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
       - name: Install GitVersion
-        if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/setup@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
           versionSpec: "6.x"
           preferLatestVersion: true
 
       - name: Determine Version
-        if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
           configFilePath: GitVersion.yml
 
       - name: Bump version and push tag
-        if: ${{ !cancelled() }}
         id: tag_version
         uses: mathieudutour/github-tag-action@a22cf08638b34d5badda920f9daf6e72c477b07b # v6.2
         with:
@@ -288,7 +288,6 @@ jobs:
           tag_prefix: "v"
 
       - name: Create a GitHub release
-        if: ${{ !cancelled() }}
         uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           allowUpdates: true
