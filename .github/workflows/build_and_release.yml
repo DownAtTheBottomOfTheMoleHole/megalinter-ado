@@ -92,7 +92,7 @@ jobs:
       - name: Publish Private Extension
         if: ${{ !cancelled() }}
         run: |
-          tfx extension publish --vsix ./private-extension.vsix --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
+          tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
 
   scan:
     runs-on: ubuntu-latest
@@ -235,7 +235,7 @@ jobs:
 
       - name: Publish Public Extension
         run: |
-          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          tfx extension publish --manifest-globs vss-extension.json --override '{"public": true}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
 
       - name: Install Azure CLI
         run: |
