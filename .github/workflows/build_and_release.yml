@@ -235,7 +235,7 @@ jobs:
 
       - name: Publish Public Extension
         run: |
-          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --public
 
       - name: Install Azure CLI
         run: |
@@ -288,13 +288,39 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           tag_prefix: "v"
 
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          echo "## What's New in ${{ steps.tag_version.outputs.new_tag }}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "### 🚀 MegaLinter Azure DevOps Extension" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "This release provides the MegaLinter task for Azure DevOps pipelines, enabling automated code linting and formatting across your repositories." >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### ✨ Features" >> release_notes.md
+          echo "- Run MegaLinter in Azure DevOps pipelines with UI-based configuration" >> release_notes.md
+          echo "- Support for all MegaLinter flavors (security, javascript, python, etc.)" >> release_notes.md
+          echo "- Automatic fix mode with PR creation" >> release_notes.md
+          echo "- PR comment reporter for inline linting feedback" >> release_notes.md
+          echo "- Docker image caching support" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📦 Installation" >> release_notes.md
+          echo "Install from the [Azure DevOps Marketplace](https://marketplace.visualstudio.com/items?itemName=${{ secrets.PUBLISHERID }}.${{ secrets.PUBLIC_EXTENSIONID }})" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "### 📝 Changelog" >> release_notes.md
+          echo "${{ steps.tag_version.outputs.changelog }}" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ steps.tag_version.outputs.previous_tag }}...${{ steps.tag_version.outputs.new_tag }}" >> release_notes.md
+
       - name: Create a GitHub release
         uses: ncipollo/release-action@b7eabc95ff50cbeeedec83973935c8f306dfcd0b # v1.20.0
         with:
           allowUpdates: true
-          body: ${{ steps.tag_version.outputs.changelog }}
+          bodyFile: release_notes.md
           discussionCategory: "General"
-          generateReleaseNotes: true
+          generateReleaseNotes: false
           makeLatest: true
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           tag: ${{ steps.tag_version.outputs.new_tag }}
