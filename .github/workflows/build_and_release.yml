@@ -168,14 +168,13 @@ jobs:
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/setup@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          version: "6.x"
+          versionSpec: "6.x"
           preferLatestVersion: true
 
       - name: Determine Version
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          useConfigFile: true
           configFilePath: GitVersion.yml
 
       - name: Replace token in task.json
@@ -268,14 +267,13 @@ jobs:
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/setup@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          version: "6.x"
+          versionSpec: "6.x"
           preferLatestVersion: true
 
       - name: Determine Version
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          useConfigFile: true
           configFilePath: GitVersion.yml
 
       - name: Bump version and push tag
