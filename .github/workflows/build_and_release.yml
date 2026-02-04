@@ -7,21 +7,6 @@ env:
   npm_cache: ${{ github.workspace }}/npm_cache
   pnpm_config_cache: ${{ github.workspace }}/.pnpm-store
 
-  # json tokens
-  private_extensionId: ${{ secrets.PRIVATE_EXTENSIONID }}
-  private_extensionName: ${{ secrets.PRIVATE_EXTENSIONNAME }}
-  public_extensionid: ${{ secrets.PUBLIC_EXTENSIONID }}
-  public_extensionname: ${{ secrets.PUBLIC_EXTENSIONNAME }}
-  publisherId: ${{ secrets.PUBLISHERID }}
-  task_author: ${{ secrets.TASK_AUTHOR }}
-  task_description: ${{ secrets.TASK_DESCRIPTION }}
-  task_friendlyname: ${{ secrets.TASK_FRIENDLYNAME }}
-  task_helpmarkdown: ${{ secrets.TASK_HELP_MARKDOWN }}
-  task_id: ${{ secrets.TASK_ID }}
-  task_name: ${{ secrets.TASK_NAME }}
-
-  # Add other environment variables here...
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -70,9 +55,11 @@ jobs:
           tokenPrefix: "#{"
           tokenSuffix: "}#"
         env:
-          public_extensionId: ${{ secrets.PUBLIC_EXTENSION_ID }}
-          public_extensionName: ${{ secrets.PUBLIC_EXTENSION_NAME }}
-          publisherId: ${{ secrets.PUBLISHER_ID }}
+          public_extensionId: ${{ secrets.PUBLIC_EXTENSIONID }}
+          public_extensionName: ${{ secrets.PUBLIC_EXTENSIONNAME }}
+          publisherId: ${{ secrets.PUBLISHERID }}
+          task_id: ${{ secrets.TASK_ID }}
+          task_name: ${{ secrets.TASK_NAME }}
           version: ${{ env.GitVersion_MajorMinorPatch }}
 
       - name: Install Node.js
@@ -82,7 +69,7 @@ jobs:
           check-latest: true
 
       - name: Install NPM Packages
-        if: !cancelled()
+        if: ${{ !cancelled() }}
         run: npm install
         working-directory: megalinter
 
@@ -168,7 +155,7 @@ jobs:
 
   public_release:
     runs-on: ubuntu-latest
-    needs: scan
+    needs: [build, scan]
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -214,10 +201,26 @@ jobs:
           tokenPrefix: "#{"
           tokenSuffix: "}#"
         env:
-          public_extensionId: ${{ secrets.PUBLIC_EXTENSION_ID }}
-          public_extensionName: ${{ secrets.PUBLIC_EXTENSION_NAME }}
-          publisherId: ${{ secrets.PUBLISHER_ID }}
+          public_extensionId: ${{ secrets.PUBLIC_EXTENSIONID }}
+          public_extensionName: ${{ secrets.PUBLIC_EXTENSIONNAME }}
+          publisherId: ${{ secrets.PUBLISHERID }}
+          task_id: ${{ secrets.TASK_ID }}
+          task_name: ${{ secrets.TASK_NAME }}
           version: ${{ env.GitVersion_MajorMinorPatch }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: "21.x"
+          check-latest: true
+
+      - name: Install NPM Packages
+        run: npm install
+        working-directory: megalinter
+
+      - name: Build with tsc
+        run: npx tsc
+        working-directory: megalinter
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
@@ -228,16 +231,23 @@ jobs:
       - name: Publish Public Extension
         run: |
           tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --pat ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+
       - name: Install Azure CLI
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
-      - name: Install Task
+      - name: Install Extension to Azure DevOps Organizations
         run: |
           IFS=',' read -ra ORGS <<< "${{ secrets.AZURE_DEVOPS_ORGS }}"
           for org in "${ORGS[@]}"; do
-          az devops login --organization https://dev.azure.com/$org --personal-access-token ${{ secrets.AZURE_DEVOPS_PAT }}
-          az devops extension install --publisher-id '${{ secrets.PUBLISHER_ID }}' --extension-id '${{ secrets.PUBLIC_EXTENSION_ID }}' --service-connection ${{ secrets.AZURE_DEVOPS_CONNECTION }}
+            echo "Installing extension to organization: $org"
+            az devops configure --defaults organization="https://dev.azure.com/$org"
+            az extension add --name azure-devops --allow-preview true || true
+            echo ${{ secrets.AZURE_DEVOPS_PAT }} | az devops login
+            az devops extension install \
+              --publisher-id "${{ secrets.PUBLISHERID }}" \
+              --extension-id "${{ secrets.PUBLIC_EXTENSIONID }}" \
+              --org "https://dev.azure.com/$org" || echo "Extension may already be installed in $org"
           done
 
   new_release:
