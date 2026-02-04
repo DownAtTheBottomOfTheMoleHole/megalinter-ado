@@ -90,10 +90,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: tfx extension create --manifest-globs vss-extension.json
 
-      - name: Publish private Extension
-        if: ${{ !cancelled() }}
-        run: |
-          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+      # Note: Publishing is handled by the public_release job to avoid version conflicts
+      # The build job only packages the extension for validation
 
   scan:
     runs-on: ubuntu-latest
