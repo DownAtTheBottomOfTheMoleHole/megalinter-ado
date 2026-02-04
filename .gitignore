@@ -1,0 +1,31 @@
+# Node.js dependencies
+node_modules/
+
+# Azure DevOps extension package
+*.vsix
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# pre-commit_logs
+.pre-commit-logs/*.log
+megalinter-reports/

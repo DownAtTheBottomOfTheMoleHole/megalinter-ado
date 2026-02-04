@@ -1,0 +1,170 @@
+# MegaLinter Azure DevOps Extension - AI Coding Agent Instructions
+
+## Project Overview
+
+This is an Azure DevOps pipeline extension (task) that wraps the `mega-linter-runner` npm package. It allows users to run Ox Security MegaLinter in Azure DevOps pipelines with a simplified UI-based configuration.
+
+**Core architecture:**
+- Main task implementation: [megalinter/megalinter.ts](../megalinter/megalinter.ts)
+- Azure DevOps task definition: [megalinter/task.json](../megalinter/task.json)
+- Extension manifest: [vss-extension.json](../vss-extension.json)
+
+## Key Conventions
+
+### Token Replacement System
+The project uses token replacement (`#{ }#`) for secrets and configuration values:
+- Tokens in `task.json` and `vss-extension.json` are replaced at build time via GitHub Actions
+- Tokens are replaced using `cschleiden/replace-tokens` action
+- All secrets (task IDs, publisher info, etc.) are stored in GitHub Secrets, not in code
+- **Never hardcode** task IDs, publisher IDs, or similar values—use tokens
+
+### TypeScript Build Pattern
+- Source: `megalinter/megalinter.ts`
+- Compiled output: `megalinter/megalinter.js`
+- The `.js` file is the execution target referenced in `task.json`
+- **Always compile TypeScript before testing**: `npm run build` or `tsc` in the `megalinter/` directory
+- The task entry point must be `megalinter.js` (not `.ts`)
+
+### Dual Package.json Structure
+The project has **two** `package.json` files with different purposes:
+1. **Root `package.json`**: Development tooling (Cucumber tests, linting, formatting)
+2. **`megalinter/package.json`**: Task runtime dependencies (azure-pipelines-task-lib, mega-linter-runner)
+
+When adding dependencies:
+- Runtime dependencies → `megalinter/package.json`
+- Test/dev dependencies → root `package.json`
+
+## Development Workflows
+
+### Building
+```bash
+cd megalinter
+npm run build  # Compiles megalinter.ts → megalinter.js
+```
+
+### Testing
+```bash
+npm test  # Runs Cucumber BDD tests (from root)
+npm run lint  # Lints all files
+npm run format  # Formats with Prettier
+```
+
+Tests are written using Cucumber/BDD:
+- Feature files: `megalinter/features/*.feature`
+- Step definitions: `megalinter/features/step_definitions/*.ts`
+
+### Pre-commit Hooks
+The project uses extensive pre-commit hooks (`.pre-commit-config.yaml`):
+- File validation (JSON, YAML, large files)
+- Secret detection (detect-secrets hook)
+- Line ending normalization
+- CSpell, Prettier, MegaLinter incremental checks
+
+Run `pre-commit run --all-files` before committing to catch issues early.
+
+### Release Process
+Releases are managed via GitHub Actions ([.github/workflows/build_and_release.yml](../.github/workflows/build_and_release.yml)):
+1. GitVersion calculates version from git history
+2. Tokens in `task.json` and `vss-extension.json` are replaced
+3. Extension is packaged as `.vsix`
+4. Published to Azure DevOps marketplace (requires manual workflow dispatch)
+
+**Never manually bump versions**—GitVersion handles this based on commit history.
+
+## Azure Pipelines Task Library Integration
+
+The task uses `azure-pipelines-task-lib` (imported as `tl`):
+- `tl.getInput(name)`: Retrieves string input from task.json
+- `tl.getBoolInput(name)`: Retrieves boolean input
+- `tl.execSync(command, args)`: Executes shell commands synchronously
+- `tl.setResult(result, message)`: Sets task success/failure status
+
+### Input Parameter Mapping
+Task parameters in `task.json` map to the `mega-linter-runner` CLI arguments:
+- Boolean inputs (e.g., `fix`, `help`) → `--fix`, `--help` flags
+- String inputs (e.g., `flavor`, `release`) → `--flavor value`, `--release value`
+- `runnerVersion`: determines npx package version (e.g., `mega-linter-runner@8.0.0`), not passed as CLI arg
+- `flavor` + `release`: combined to build Docker image name (e.g., `oxsecurity/megalinter-javascript:v8`)
+
+**Input name convention**: Use camelCase in `task.json` (e.g., `containerName`), map to kebab-case CLI args (e.g., `--container-name`)
+
+## Docker Optimization Pattern
+
+The task **pre-checks** for Docker images before pulling:
+```typescript
+const dockerImageCheck = tl.execSync("docker", ["images", "-q", dockerImageName]);
+if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
+  console.log(`Docker image '${dockerImageName}' found in cache. Skipping pull.`);
+}
+```
+
+This avoids unnecessary pulls when the image is already cached. Preserve this pattern when modifying Docker-related code.
+
+## Caching for Pipeline Consumers
+
+The extension supports Docker image caching for faster pipeline runs. Users consuming this extension can implement caching:
+
+### Self-Hosted Agents (Recommended)
+Docker images persist between runs automatically. The task checks for cached images before pulling.
+
+### Microsoft-Hosted Agents with Docker Caching
+Add a caching step before the MegaLinter task in the consuming pipeline:
+
+```yaml
+# Example pipeline using this extension with caching
+variables:
+  MEGALINTER_IMAGE: oxsecurity/megalinter-javascript:v8
+
+steps:
+  # Cache Docker images using Pipeline Caching
+  - task: Cache@2
+    displayName: Cache Docker images
+    inputs:
+      key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
+      path: $(Pipeline.Workspace)/docker-cache
+      restoreKeys: |
+        docker | "$(Agent.OS)"
+
+  # Load cached image if exists
+  - script: |
+      if [ -f "$(Pipeline.Workspace)/docker-cache/megalinter.tar" ]; then
+        docker load -i $(Pipeline.Workspace)/docker-cache/megalinter.tar
+        echo "Loaded cached Docker image"
+      fi
+    displayName: Load cached Docker image
+
+  # Run MegaLinter (will skip pull if image loaded from cache)
+  - task: MegaLinter@1
+    inputs:
+      flavor: javascript
+      release: v8
+
+  # Save image to cache after run (only on main branch)
+  - script: |
+      mkdir -p $(Pipeline.Workspace)/docker-cache
+      docker save $(MEGALINTER_IMAGE) -o $(Pipeline.Workspace)/docker-cache/megalinter.tar
+    displayName: Save Docker image to cache
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+```
+
+## Common Gotchas
+
+1. **Compiled JavaScript is committed**: The `megalinter.js` file is tracked in git and must be rebuilt before committing TypeScript changes
+2. **Task ID must be unique**: Each task has a GUID (`task_id` token) that must remain stable—changing it breaks existing pipelines
+3. **Node version pinning**: The project specifies exact Node.js and npm versions in `package.json` engines—use these for consistency
+4. **Arguments array construction**: The `args` array is dynamically built based on input params—maintain this pattern for new inputs
+
+## External Dependencies
+
+- **mega-linter-runner**: NPM package that wraps MegaLinter Docker execution
+- **azure-pipelines-task-lib**: Microsoft's library for building ADO tasks
+- **Docker**: Required at runtime to pull and execute MegaLinter containers
+
+## Testing Locally
+
+To test the task locally without publishing:
+1. Compile TypeScript: `cd megalinter && npm run build`
+2. Mock Azure Pipelines inputs by setting environment variables (e.g., `INPUT_FLAVOR=javascript`)
+3. Run: `node megalinter/megalinter.js`
+
+Note: Local testing requires Docker and appropriate Azure Pipelines environment variables set.

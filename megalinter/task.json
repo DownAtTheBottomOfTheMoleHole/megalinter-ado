@@ -1,0 +1,147 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Microsoft/azure-pipelines-task-lib/master/tasks.schema.json",
+  "author": "#{task_author}#",
+  "category": "Azure Pipelines",
+  "demands": [],
+  "description": "#{task_description}#",
+  "execution": {
+    "Node20_1": {
+      "target": "megalinter.js"
+    }
+  },
+  "friendlyName": "#{task_friendlyname}#",
+  "helpMarkDown": "#{task_helpmarkdown}#",
+  "id": "#{task_id}#",
+  "inputs": [
+    {
+      "defaultValue": "$(Pipeline.Workspace)",
+      "helpMarkDown": "The root directory containing the files to lint. Defaults to the pipeline workspace.",
+      "label": "Directory Path",
+      "name": "path",
+      "required": false,
+      "type": "filePath"
+    },
+    {
+      "defaultValue": "all",
+      "helpMarkDown": "MegaLinter flavor optimized for your stack. Options: all, ci_light, cupcake, documentation, dotnet, dotnetweb, formatters, go, java, javascript, php, python, ruby, rust, salesforce, security, swift, terraform. See https://megalinter.io/latest/flavors/",
+      "label": "Flavor",
+      "name": "flavor",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "helpMarkDown": "Override the Docker image used, including if it's from another Docker registry.",
+      "label": "Docker Image",
+      "name": "image",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "helpMarkDown": "Environment variables for MegaLinter configuration (e.g., 'DISABLE_LINTERS=SPELL_CSPELL,MARKDOWN_MARKDOWNLINT'). See https://megalinter.io/latest/configuration/ for all available variables.",
+      "label": "Environment Variables",
+      "name": "env",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Enable this option to automatically apply formatting and fixes in your files.",
+      "label": "Automatically Apply Fixes",
+      "name": "fix",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "defaultValue": "v9",
+      "helpMarkDown": "The MegaLinter Docker image tag to use (e.g., 'latest', 'v9', 'v8.13.0'). See https://megalinter.io/latest/ for available versions.",
+      "label": "MegaLinter Version",
+      "name": "release",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Enable this option to show mega-linter-runner help.",
+      "label": "Show Help",
+      "name": "help",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "defaultValue": "latest",
+      "helpMarkDown": "Specify the mega-linter-runner npm package version to use (e.g., '8.0.0' or 'latest').",
+      "label": "Runner Version",
+      "name": "runnerVersion",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Generate MegaLinter configuration files.",
+      "label": "Generate Configuration Files",
+      "name": "install",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "helpMarkDown": "Specify the MegaLinter container name.",
+      "label": "Container Name",
+      "name": "containerName",
+      "required": false,
+      "type": "string"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Enable this option to remove the MegaLinter Docker container after completion.",
+      "label": "Remove Container",
+      "name": "removeContainer",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Enable Azure DevOps PR comment reporter to post linting results as comments on pull requests. When disabled, comments are still auto-enabled for PR builds (Build.Reason = 'PullRequest').",
+      "label": "Enable PR Comments",
+      "name": "enablePRComments",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "defaultValue": "true",
+      "helpMarkDown": "When fixes are applied (--fix), automatically create a pull request with the changes. Requires 'Contribute to pull requests' permission for the build service account.",
+      "label": "Create PR for Fixes",
+      "name": "createFixPR",
+      "required": false,
+      "type": "boolean"
+    },
+    {
+      "helpMarkDown": "Path to the MegaLinter configuration file (e.g., '.mega-linter.yml'). If not specified, MegaLinter will look for it in the working directory.",
+      "label": "Config File Path",
+      "name": "configFile",
+      "required": false,
+      "type": "filePath"
+    },
+    {
+      "helpMarkDown": "Directory path where MegaLinter reports and logs should be output (e.g., 'megalinter-reports'). If not specified, defaults to 'megalinter-reports' in the working directory.",
+      "label": "Reports Output Path",
+      "name": "reportsPath",
+      "required": false,
+      "type": "filePath"
+    },
+    {
+      "helpMarkDown": "Comma-separated list of linters to disable (e.g., 'SPELL_CSPELL,MARKDOWN_MARKDOWNLINT'). See https://megalinter.io/latest/configuration/ for available linters.",
+      "label": "Disable Linters",
+      "name": "disableLinters",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "instanceNameFormat": "Run Mega-Linter",
+  "name": "#{task_name}#",
+  "version": {
+    "Major": #{major}#,
+    "Minor": #{minor}#,
+    "Patch": #{patch}#
+  },
+  "visibility": ["Build", "Release"]
+}

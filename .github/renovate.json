@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "addLabels": ["renovate", "bot"],
+  "autoApprove": true,
+  "automerge": true,
+  "azure-pipelines": {
+    "enabled": true,
+    "managerFilePatterns": ["/\\.ya?ml$/"]
+  },
+  "description": "standard DBMH config",
+  "extends": ["config:best-practices"],
+  "gitAuthor": "DBMH Renovate <renovate@dbmh.com>",
+  "hostRules": [
+    {
+      "hostType": "github",
+      "matchHost": "github.com",
+      "repository": "https://github.com/*",
+      "token": "${PAT}"
+    }
+  ],
+  "ignoreDeprecated": true,
+  "ignoreUnstable": true,
+  "packageRules": [
+    {
+      "description": "Dont update Azure Pipelines tasks, it breaks things",
+      "enabled": false,
+      "extractVersion": "^(?<version>\\d+)",
+      "matchDatasources": ["azure-pipelines-tasks"]
+    },
+    {
+      "major": {
+        "automerge": false
+      }
+    },
+    {
+      "matchDatasources": ["github-tags", "github-releases"],
+      "pinDigests": true,
+      "matchPackageNames": ["/^actions//"]
+    }
+  ],
+  "prConcurrentLimit": 0,
+  "prCreation": "immediate",
+  "prHourlyLimit": 0,
+  "pruneBranchAfterAutomerge": true,
+  "schedule": ["at any time"],
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "timezone": "GB",
+  "unicodeEmoji": true,
+  "updatePinnedDependencies": true,
+  "useBaseBranchConfig": "merge"
+}

@@ -1,0 +1,436 @@
+parameters:
+  # use this to define the selfhosted agent pool you wish to use
+  - name: selfHostedPool
+    displayName: Selfhosted agent pool
+    type: string
+    default: Default
+    values:
+      - Default
+      - Azure Pipelines
+
+  # use this to define the microsoft hosted agent pool you wish to use
+  - name: hostedImage
+    displayName: Microsoft hostedPool Image
+    type: string
+    default: ubuntu-latest
+    values:
+      - macOS-11
+      - macOS-12
+      - macos-latest
+      - ubuntu-20.04
+      - ubuntu-22.04
+      - ubuntu-latest
+      - windows-2019
+      - windows-2022
+      - windows-latest
+
+  # use this to make all stages use the self hosted agent pool
+  - name: use_selfhosted
+    displayName: Tick to Use selfhosted agents
+    type: boolean
+    default: false
+
+variables:
+  - group: "megalinter-ado-extension"
+  - name: npm_cache
+    value: $(Pipeline.Workspace)/npm_cache
+  - name: pnpm_config_cache
+    value: $(Pipeline.Workspace)/.pnpm-store
+  #- name: private_extensionId
+  #  value: "private_extensionId"
+  #- name: private_extensionName
+  #  value: "private_extensionName"
+  #- name: public_extensionId
+  #  value: "public_extensionId"
+  #- name: public_extensionName
+  #  value: "public_extensionName"
+  #- name: publisherId
+  #  value: "publisherId"
+  #- name: private_accounts
+  #  value: "private_accounts"
+  #- name: public_accounts
+  #  value: "public_accounts"
+  #- name: task_author
+  #  value: "task_author"
+  #- name: task_description
+  #  value: "task_description"
+  #- name: task_friendlyname
+  #  value: "task_friendlyname"
+  #- name: task_helpmarkdown
+  #  value: "task_helpmarkdown"
+  #- name: task_name
+  #  value: "task_name"
+  #- name: task_id
+  #  value: "task_id"
+
+pr: none
+trigger: none
+
+# Pipeline runs as sequential stages to work without parallelism (free tier)
+stages:
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #   Build and release extension
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - stage: Build
+    displayName: "Build Extension"
+    jobs:
+      - job: build
+        timeoutInMinutes: 10
+        cancelTimeoutInMinutes: 2
+        displayName: "build extension"
+        pool:
+          ${{ if or( eq(parameters.use_selfhosted, true), eq(variables.use_selfhosted, 'true')  ) }}:
+            name: "${{ parameters.selfHostedPool }}"
+          ${{ if and( eq(parameters.use_selfhosted, false), eq(variables.use_selfhosted, 'false') ) }}:
+            vmimage: "${{ parameters.hostedImage }}"
+        steps:
+          - checkout: self
+            condition: succeededOrFailed()
+            displayName: "Checkout main repo"
+            enabled: true
+            fetchDepth: 0
+            persistCredentials: true
+
+          - task: gitversion-setup@4
+            condition: succeededOrFailed()
+            displayName: "Install GitVersion"
+            enabled: true
+            inputs:
+              versionSpec: "6.x"
+              preferLatestVersion: true
+
+          - task: gitversion-execute@4
+            condition: succeededOrFailed()
+            displayName: "Determine GitVersion"
+            enabled: true
+            inputs:
+              configFilePath: "GitVersion.yml"
+              updateAssemblyInfo: true
+
+          - script: |
+              echo "##vso[task.setvariable variable=version]$(GitVersion.MajorMinorPatch)"
+              echo "##vso[task.setvariable variable=major]$(GitVersion.Major)"
+              echo "##vso[task.setvariable variable=minor]$(GitVersion.Minor)"
+              echo "##vso[task.setvariable variable=patch]$(GitVersion.Patch)"
+            condition: succeededOrFailed()
+            displayName: "Set version environment variables"
+            enabled: true
+
+          - task: qetza.replacetokens.replacetokens-task.replacetokens@6
+            condition: succeededOrFailed()
+            displayName: "Replace tokens in manifest files"
+            enabled: true
+            inputs:
+              root: "$(System.DefaultWorkingDirectory)"
+              sources: |
+                vss-extension.json
+                megalinter/task.json
+              escape: "json"
+              missingVarAction: "keep"
+              missingVarLog: "error"
+
+          - task: NodeTool@0
+            condition: succeededOrFailed()
+            displayName: "Install Node.js"
+            enabled: true
+            inputs:
+              versionSource: "spec"
+              versionSpec: "22.x"
+              checkLatest: true
+
+          - task: Npm@1
+            condition: succeededOrFailed()
+            displayName: "Install NPM Packages"
+            enabled: true
+            inputs:
+              command: "install"
+              workingDir: "$(System.DefaultWorkingDirectory)/megalinter"
+
+          - script: tsc
+            condition: succeededOrFailed()
+            displayName: "build with tsc"
+            enabled: true
+            workingDirectory: $(System.DefaultWorkingDirectory)/megalinter
+
+          - task: TfxInstaller@5
+            condition: succeededOrFailed()
+            displayName: "Install TFX CLI"
+            enabled: true
+            inputs:
+              version: "v0.x"
+
+          - task: PackageAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: "Package Private Extension"
+            enabled: true
+            inputs:
+              extensionId: $(private_extensionId)
+              extensionName: $(private_extensionName)
+              extensionPricing: "free"
+              extensionVersion: "$(GitVersion.MajorMinorPatch)"
+              extensionVisibility: "private"
+              outputPath: "$(Build.ArtifactStagingDirectory)"
+              rootFolder: "$(Build.SourcesDirectory)"
+              updateTasksVersion: true
+
+          - task: PublishAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: "Publish Private Extension"
+            enabled: true
+            inputs:
+              connectTo: "VsTeam"
+              connectedServiceName: "Visual Studio Market Place"
+              fileType: "manifest"
+              rootFolder: "$(Build.SourcesDirectory)"
+              publisherId: "$(publisherId)"
+              extensionId: "$(private_extensionId)"
+              extensionName: "$(private_extensionName)"
+              extensionVersion: "$(GitVersion.MajorMinorPatch)"
+              updateTasksId: true
+              extensionVisibility: "private"
+              extensionPricing: "free"
+              shareWith: "$(private_accounts)"
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #   Scan extension
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - stage: Scan
+    displayName: "Scan Repository"
+    dependsOn: Build
+    condition: succeededOrFailed()
+    jobs:
+      - job: scan
+        timeoutInMinutes: 30
+        cancelTimeoutInMinutes: 2
+        displayName: "Scan repo with Megalinter"
+        pool:
+          ${{ if or( eq(parameters.use_selfhosted, true), eq(variables.use_selfhosted, 'true')  ) }}:
+            name: "${{ parameters.selfHostedPool }}"
+          ${{ if and( eq(parameters.use_selfhosted, false), eq(variables.use_selfhosted, 'false') ) }}:
+            vmimage: "${{ parameters.hostedImage }}"
+        steps:
+          - checkout: self
+            condition: succeededOrFailed()
+            displayName: "Checkout main repo"
+            enabled: true
+            fetchDepth: 0
+            persistCredentials: true
+
+          - script: |
+              if [ -f $(Pipeline.Workspace)/docker_image.tar ]; then
+              docker load -i $(Pipeline.Workspace)/docker_image.tar
+              fi
+            displayName: Load Docker image from cache
+
+          - task: NodeTool@0
+            condition: succeededOrFailed()
+            displayName: "Install Node.js"
+            enabled: true
+            inputs:
+              versionSource: "spec"
+              versionSpec: "22.x"
+              checkLatest: true
+
+          - task: npmAuthenticate@0
+            condition: succeeded()
+            displayName: Authenticate with NPM
+            enabled: true
+            inputs:
+              workingFile: .npmrc
+
+          - task: Cache@2
+            displayName: NPM cache check / restore
+            inputs:
+              cacheHitVar: NPM_CACHE_RESTORED
+              key: npm | $(Agent.OS)
+              path: $(Build.SourcesDirectory)/node_modules
+              restoreKeys: |
+                npm | "$(Agent.OS)"
+
+          - task: Cache@2
+            condition: succeededOrFailed()
+            displayName: Docker check / restore
+            inputs:
+              cacheHitVar: DOCKER_CACHE_RESTORED
+              key: docker | $(Agent.OS) | megalinter-security-v9
+              path: $(Pipeline.Workspace)/docker_image.tar
+              restoreKeys: |
+                docker | "$(Agent.OS)"
+
+          - task: Npm@1
+            displayName: Install NPM packages
+            inputs:
+              command: "install"
+            condition: eq(variables.NPM_CACHE_RESTORED, 'false')
+
+          - script: |
+              docker pull oxsecurity/megalinter-security:v9
+            condition: eq(variables.DOCKER_CACHE_RESTORED, 'false')
+            displayName: Pull Docker image
+
+          - script: |
+              git config --global user.email 'megalinter@megalinter.io'
+              git config --global user.name 'Megalinter runner'
+              npx --no --userconfig .npmrc mega-linter-runner --release v9 --fix --flavor security --env "MEGALINTER_CONFIG='.config/.mega-linter.yml'"
+            condition: succeededOrFailed()
+            displayName: "[Incremental] run Megalinter"
+            enabled: true
+            env:
+              AZURE_COMMENT_REPORTER: true
+              CI: true
+              DISABLE_ERRORS: true
+              TF_BUILD: false
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              SYSTEM_COLLECTIONURI: $(System.CollectionUri)
+              SYSTEM_TEAMPROJECT: $(System.TeamProject)
+              BUILD_BUILD_ID: $(Build.BuildId)
+              BUILD_REPOSITORY_ID: $(Build.Repository.ID)
+              MEGALINTER_CONFIG: ".config/.mega-linter.yml"
+              VALIDATE_ALL_CODEBASE: false
+            workingDirectory: $(System.DefaultWorkingDirectory)
+
+          - script: |
+              docker save oxsecurity/megalinter-security:v9 > $(Pipeline.Workspace)/docker_image.tar
+            condition: succeededOrFailed()
+            displayName: Save Docker image for caching
+
+          - task: PublishBuildArtifacts@1
+            condition: succeededOrFailed()
+            displayName: Publish build artifacts
+            enabled: true
+            inputs:
+              PathtoPublish: "$(System.DefaultWorkingDirectory)/megalinter-reports"
+              ArtifactName: "megalinter-reports"
+              publishLocation: "Container"
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #   Test extension
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - stage: Test
+    displayName: "Test Extension"
+    dependsOn: Scan
+    condition: succeededOrFailed()
+    jobs:
+      - job: test
+        timeoutInMinutes: 30
+        cancelTimeoutInMinutes: 2
+        displayName: "Test extension"
+        pool:
+          ${{ if or( eq(parameters.use_selfhosted, true), eq(variables.use_selfhosted, 'true')  ) }}:
+            name: "${{ parameters.selfHostedPool }}"
+          ${{ if and( eq(parameters.use_selfhosted, false), eq(variables.use_selfhosted, 'false') ) }}:
+            vmimage: "${{ parameters.hostedImage }}"
+        steps:
+          - task: TfxInstaller@5
+            condition: succeededOrFailed()
+            displayName: "Install TFX CLI"
+            enabled: true
+            inputs:
+              version: "v0.x"
+
+          - task: InstallAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: Install Extension in specific accounts
+            enabled: true
+            inputs:
+              accounts: https://dev.azure.com/$(private_accounts)
+              connectTo: "VsTeam"
+              connectedServiceName: "Visual Studio Market Place"
+              method: "id"
+              publisherId: "$(publisherid)"
+              extensionId: "$(private_extensionId)"
+
+          # Note: The Megalinter task won't exist until the extension is published.
+          # Using npx mega-linter-runner directly for testing.
+          - script: |
+              npx mega-linter-runner --release v9 --fix --flavor all --env "MEGALINTER_CONFIG='.config/.mega-linter.yml'" --remove-container
+            condition: succeededOrFailed()
+            displayName: Run MegaLinter (via npx for testing)
+            enabled: true
+            env:
+              MEGALINTER_CONFIG: ".config/.mega-linter.yml"
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  #   Public release
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - stage: PublicRelease
+    displayName: "Public Release"
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: public_release
+        timeoutInMinutes: 30
+        cancelTimeoutInMinutes: 2
+        displayName: "public release"
+        pool:
+          ${{ if or( eq(parameters.use_selfhosted, true), eq(variables.use_selfhosted, 'true')  ) }}:
+            name: "${{ parameters.selfHostedPool }}"
+          ${{ if and( eq(parameters.use_selfhosted, false), eq(variables.use_selfhosted, 'false') ) }}:
+            vmimage: "${{ parameters.hostedImage }}"
+        steps:
+          - checkout: self
+            condition: succeededOrFailed()
+            displayName: "Checkout main repo"
+            enabled: true
+            fetchDepth: 0
+            persistCredentials: true
+
+          - task: gitversion-setup@4
+            condition: succeededOrFailed()
+            displayName: "Install GitVersion"
+            enabled: true
+            inputs:
+              versionSpec: "6.x"
+              preferLatestVersion: true
+
+          - task: gitversion-execute@4
+            condition: succeededOrFailed()
+            displayName: "Determine GitVersion"
+            enabled: true
+            inputs:
+              configFilePath: "GitVersion.yml"
+              updateAssemblyInfo: true
+
+          - task: PackageAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: "Package Public Extension"
+            enabled: true
+            inputs:
+              extensionId: $(public_extensionId)
+              extensionName: $(public_extensionName)
+              extensionPricing: "free"
+              extensionVersion: "$(GitVersion.MajorMinorPatch)"
+              extensionVisibility: "public"
+              outputPath: "$(Build.ArtifactStagingDirectory)"
+              rootFolder: "$(Build.SourcesDirectory)"
+              updateTasksVersion: true
+
+          - task: PublishAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: Publish extension publicly
+            enabled: true
+            inputs:
+              connectTo: "VsTeam"
+              connectedServiceName: "Visual Studio Market Place"
+              fileType: "manifest"
+              rootFolder: "$(Build.SourcesDirectory)"
+              publisherId: "$(publisherId)"
+              extensionId: "$(public_extensionId)"
+              extensionName: "$(public_extensionName)"
+              extensionVersion: "$(GitVersion.MajorMinorPatch)"
+              updateTasksId: true
+              extensionVisibility: "public"
+              extensionPricing: "free"
+              shareWith: "$(public_accounts)"
+
+          - task: InstallAzureDevOpsExtension@5
+            condition: succeededOrFailed()
+            displayName: Install Extension in specific accounts
+            enabled: true
+            inputs:
+              accounts: https://dev.azure.com/$(public_accounts)
+              connectTo: "VsTeam"
+              connectedServiceName: "Visual Studio Market Place"
+              method: "id"
+              publisherId: "$(publisherid)"
+              extensionId: "$(public_extensionId)"

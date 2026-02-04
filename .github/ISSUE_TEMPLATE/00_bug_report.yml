@@ -1,0 +1,89 @@
+name: "Report a Bug"
+description: "Choose this option to let us know about an unexpected error, a crash, or otherwise incorrect behavior."
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Thank you for raising a bug report!
+
+        Before submitting a bug report, we ask that you first search existing issues to see if someone else may have experienced the same issue. This helps to keep all relevant information in one place, including any potential workarounds.
+
+  - type: input
+    id: azure_devops_task_version
+    attributes:
+      label: Azure DevOps Task Version
+      description: The version of the Azure DevOps task used when experiencing the bug. If multiple versions have been tested, a comma separated list.
+      placeholder: "X.Y.Z"
+    validations:
+      required: true
+
+  - type: input
+    id: mega_linter_runner_version
+    attributes:
+      label: Mega-Linter-Runner Version
+      description: The version of the mega-linter-runner used when experiencing the bug. If multiple versions have been tested, a comma separated list.
+      placeholder: "X.Y.Z"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        # Description
+
+        In the next few fields, please provide any useful information you can around what resources are affected, what you expected to happen, and what actually happened. There is also a field to optionally provide a small snippet of any relevant error or panic output.
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: List the steps to reproduce the bug.
+      placeholder: |
+        1. Go to '...'
+        2. Run '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Add screenshots to help explain your problem, if applicable.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        # Configuration and Logging
+
+        Here, we ask that you provide the Azure DevOps pipeline configuration and, when possible, the debug logs. For configurations or logs of more than just a few lines, it's preferred to either share a Gist link or zip the files and upload them.
+
+        Azure DevOps configurations or debug logs under 25MB may be [attached directly in the field](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/attaching-files). Files larger than this should be uploaded to a file hosting service and a link shared.

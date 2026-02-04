@@ -1,0 +1,298 @@
+# Test pipeline for MegaLinter Azure DevOps Extension
+# Use this pipeline to verify the extension works after publishing
+#
+# Prerequisites:
+# 1. Extension must be published to your Azure DevOps organization
+# 2. Extension must be installed in the organization where this pipeline runs
+
+trigger: none
+pr: none
+
+parameters:
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Agent Configuration
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: agentPool
+    displayName: Agent Pool
+    type: string
+    default: ubuntu-latest
+    values:
+      - ubuntu-latest
+      - ubuntu-22.04
+      - ubuntu-20.04
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # MegaLinter Core Options
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: megalinterFlavor
+    displayName: MegaLinter Flavor
+    type: string
+    default: all
+    values:
+      - all
+      - ci_light
+      - cupcake
+      - documentation
+      - dotnet
+      - dotnetweb
+      - formatters
+      - go
+      - java
+      - javascript
+      - php
+      - python
+      - ruby
+      - rust
+      - salesforce
+      - security
+      - swift
+      - terraform
+
+  - name: megalinterVersion
+    displayName: MegaLinter Version (Docker tag)
+    type: string
+    default: v9
+
+  - name: runnerVersion
+    displayName: mega-linter-runner NPM Version
+    type: string
+    default: v9
+
+  - name: path
+    displayName: Directory Path to Lint
+    type: string
+    default: "$(Build.SourcesDirectory)"
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # MegaLinter Behavior Options
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: fix
+    displayName: Automatically Apply Fixes
+    type: boolean
+    default: true
+
+  - name: removeContainer
+    displayName: Remove Container After Run
+    type: boolean
+    default: true
+
+  - name: showHelp
+    displayName: Show mega-linter-runner Help
+    type: boolean
+    default: false
+
+  - name: install
+    displayName: Generate MegaLinter Config Files
+    type: boolean
+    default: false
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Pull Request Options
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: enablePRComments
+    displayName: Enable PR Comments (auto-enabled for PR builds)
+    type: boolean
+    default: false
+
+  - name: createFixPR
+    displayName: Create PR for Applied Fixes
+    type: boolean
+    default: true
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Advanced Options (all optional)
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: customImage
+    displayName: Custom Docker Image (overrides flavor/version)
+    type: string
+    default: " "
+
+  - name: containerName
+    displayName: Custom Container Name
+    type: string
+    default: " "
+
+  - name: envVars
+    displayName: Environment Variables (KEY=VALUE format)
+    type: string
+    default: " "
+
+  - name: configFile
+    displayName: Config File Path
+    type: string
+    default: " "
+
+  - name: reportsPath
+    displayName: Reports Output Path
+    type: string
+    default: " "
+
+  - name: disableLinters
+    displayName: Disable Linters
+    type: string
+    default: " "
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Pipeline Options
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  - name: useDockerCache
+    displayName: Enable Docker Image Caching
+    type: boolean
+    default: true
+
+variables:
+  # Build the correct Docker image name based on flavor and version
+  # This matches the logic in megalinter.ts - "all" flavor = no suffix
+  ${{ if and(ne(parameters.customImage, ''), ne(parameters.customImage, ' ')) }}:
+    MEGALINTER_IMAGE: ${{ parameters.customImage }}
+  ${{ elseif eq(parameters.megalinterFlavor, 'all') }}:
+    MEGALINTER_IMAGE: oxsecurity/megalinter:${{ parameters.megalinterVersion }}
+  ${{ else }}:
+    MEGALINTER_IMAGE: oxsecurity/megalinter-${{ parameters.megalinterFlavor }}:${{ parameters.megalinterVersion }}
+
+# Pipeline runs as sequential stages to work without parallelism (free tier)
+stages:
+  - stage: Test
+    displayName: Test MegaLinter Extension
+    jobs:
+      - job: RunMegaLinter
+        displayName: Run MegaLinter
+        timeoutInMinutes: 60
+        pool:
+          vmImage: ${{ parameters.agentPool }}
+        steps:
+          - checkout: self
+            displayName: Checkout repository
+            fetchDepth: 0
+
+          # Display configuration summary
+          - script: |
+              echo "=============================================="
+              echo "MegaLinter Extension Test Configuration"
+              echo "=============================================="
+              echo ""
+              echo "Core Settings:"
+              echo "  Flavor:          ${{ parameters.megalinterFlavor }}"
+              echo "  Version:         ${{ parameters.megalinterVersion }}"
+              echo "  Runner Version:  ${{ parameters.runnerVersion }}"
+              echo "  Path:            ${{ parameters.path }}"
+              echo ""
+              echo "Behavior Options:"
+              echo "  Fix:             ${{ parameters.fix }}"
+              echo "  Remove Container: ${{ parameters.removeContainer }}"
+              echo "  Show Help:       ${{ parameters.showHelp }}"
+              echo "  Install Config:  ${{ parameters.install }}"
+              echo ""
+              echo "Advanced Options:"
+              echo "  Custom Image:    ${{ parameters.customImage }}"
+              echo "  Container Name:  ${{ parameters.containerName }}"
+              echo "  Env Vars:        ${{ parameters.envVars }}"
+              echo "  Config File:     ${{ parameters.configFile }}"
+              echo "  Reports Path:    ${{ parameters.reportsPath }}"
+              echo "  Disable Linters: ${{ parameters.disableLinters }}"
+              echo ""
+              echo "Docker Image:      $(MEGALINTER_IMAGE)"
+              echo "=============================================="
+            displayName: Display Configuration
+
+          # Optional: Cache Docker images for faster runs
+          - ${{ if eq(parameters.useDockerCache, true) }}:
+              - task: Cache@2
+                displayName: Cache Docker images
+                inputs:
+                  key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
+                  path: $(Pipeline.Workspace)/docker-cache
+                  restoreKeys: |
+                    docker | "$(Agent.OS)"
+
+              - script: |
+                  if [ -f "$(Pipeline.Workspace)/docker-cache/megalinter.tar" ]; then
+                    echo "Loading cached Docker image..."
+                    docker load -i $(Pipeline.Workspace)/docker-cache/megalinter.tar
+                    echo "Cached image loaded successfully"
+                    docker images | grep megalinter || true
+                  else
+                    echo "No cached image found, task will pull the correct image"
+                  fi
+                displayName: Load cached Docker image
+                continueOnError: true
+
+          # Cache npx packages for faster runs
+          - task: Cache@2
+            displayName: Cache npm packages
+            inputs:
+              key: 'npm | "$(Agent.OS)" | "${{ parameters.runnerVersion }}"'
+              path: $(HOME)/.npm/_npx
+          # All available options are exposed as pipeline parameters
+          - task: MegaLinter@1
+            displayName: Run MegaLinter Extension
+            inputs:
+              path: ${{ parameters.path }}
+              flavor: ${{ parameters.megalinterFlavor }}
+              release: ${{ parameters.megalinterVersion }}
+              runnerVersion: ${{ parameters.runnerVersion }}
+              fix: ${{ parameters.fix }}
+              removeContainer: ${{ parameters.removeContainer }}
+              help: ${{ parameters.showHelp }}
+              install: ${{ parameters.install }}
+              enablePRComments: ${{ parameters.enablePRComments }}
+              createFixPR: ${{ parameters.createFixPR }}
+              ${{ if and(ne(parameters.customImage, ''), ne(parameters.customImage, ' ')) }}:
+                image: ${{ parameters.customImage }}
+              ${{ if and(ne(parameters.containerName, ''), ne(parameters.containerName, ' ')) }}:
+                containerName: ${{ parameters.containerName }}
+              ${{ if and(ne(parameters.envVars, ''), ne(parameters.envVars, ' ')) }}:
+                env: ${{ parameters.envVars }}
+              ${{ if and(ne(parameters.configFile, ''), ne(parameters.configFile, ' ')) }}:
+                configFile: ${{ parameters.configFile }}
+              ${{ if and(ne(parameters.reportsPath, ''), ne(parameters.reportsPath, ' ')) }}:
+                reportsPath: ${{ parameters.reportsPath }}
+              ${{ if and(ne(parameters.disableLinters, ''), ne(parameters.disableLinters, ' ')) }}:
+                disableLinters: ${{ parameters.disableLinters }}
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+          # Save Docker image to cache (only on main branch)
+          - ${{ if eq(parameters.useDockerCache, true) }}:
+              - script: |
+                  mkdir -p $(Pipeline.Workspace)/docker-cache
+                  echo "Saving Docker image to cache..."
+                  docker save $(MEGALINTER_IMAGE) -o $(Pipeline.Workspace)/docker-cache/megalinter.tar
+                  echo "Image saved to cache"
+                displayName: Save Docker image to cache
+                condition: succeededOrFailed()
+
+          # Publish MegaLinter reports as artifacts
+          - task: PublishBuildArtifacts@1
+            displayName: Publish MegaLinter Reports
+            condition: succeededOrFailed()
+            inputs:
+              pathToPublish: $(Build.SourcesDirectory)/megalinter-reports
+              artifactName: megalinter-reports
+            continueOnError: true
+
+  - stage: Validate
+    displayName: Validate Results
+    dependsOn: Test
+    condition: succeededOrFailed()
+    jobs:
+      - job: Summary
+        displayName: Test Summary
+        pool:
+          vmImage: ${{ parameters.agentPool }}
+        steps:
+          - script: |
+              echo "=============================================="
+              echo "MegaLinter Extension Test Complete"
+              echo "=============================================="
+              echo ""
+              echo "Configuration Used:"
+              echo "  - Flavor: ${{ parameters.megalinterFlavor }}"
+              echo "  - Version: ${{ parameters.megalinterVersion }}"
+              echo "  - Runner Version: ${{ parameters.runnerVersion }}"
+              echo "  - Fix Mode: ${{ parameters.fix }}"
+              echo "  - Docker Caching: ${{ parameters.useDockerCache }}"
+              echo ""
+              echo "Check the 'megalinter-reports' artifact for detailed results."
+              echo "=============================================="
+            displayName: Print Summary

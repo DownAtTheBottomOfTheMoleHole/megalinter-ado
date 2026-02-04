@@ -1,0 +1,29 @@
+changelog:
+  categories:
+    - title: "🚀 Features"
+      labels:
+        - enhancement
+        - feature
+    - title: "🐛 Bug Fixes"
+      labels:
+        - bug
+    - title: "📝 Documentation"
+      labels:
+        - documentation
+    - title: "🧰 Maintenance"
+      labels:
+        - chore
+        - maintenance
+    - title: "🔧 Repository"
+      labels:
+        - repository
+    - title: "Other Changes"
+      labels:
+        - "*"
+  exclude-labels:
+    - skip-changelog
+  template: |
+    ## What's Changed
+    $CHANGES
+
+    **Full Changelog**: $CHANGES_URL
