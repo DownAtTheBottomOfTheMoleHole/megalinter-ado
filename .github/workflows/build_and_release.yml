@@ -25,14 +25,13 @@ jobs:
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/setup@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          version: "6.x"
+          versionSpec: "6.x"
           preferLatestVersion: true
 
       - name: Determine Version
         if: ${{ !cancelled() }}
         uses: gittools/actions/gitversion/execute@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
         with:
-          useConfigFile: true
           configFilePath: GitVersion.yml
 
       - name: Replace token in task.json
@@ -59,8 +58,8 @@ jobs:
           tokenPrefix: "#{"
           tokenSuffix: "}#"
         env:
-          public_extensionId: ${{ secrets.PUBLIC_EXTENSIONID }}
-          public_extensionName: ${{ secrets.PUBLIC_EXTENSIONNAME }}
+          public_extensionId: ${{ secrets.PRIVATE_EXTENSIONID }}
+          public_extensionName: ${{ secrets.PRIVATE_EXTENSIONNAME }}
           publisherId: ${{ secrets.PUBLISHERID }}
           task_id: ${{ secrets.TASK_ID }}
           task_name: ${{ secrets.TASK_NAME }}
@@ -69,7 +68,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
-          node-version: "21.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install NPM Packages
@@ -88,10 +87,12 @@ jobs:
 
       - name: Package Private Extension
         if: ${{ !cancelled() }}
-        run: tfx extension create --manifest-globs vss-extension.json
+        run: tfx extension create --manifest-globs vss-extension.json --output-path ./private-extension.vsix
 
-      # Note: Publishing is handled by the public_release job to avoid version conflicts
-      # The build job only packages the extension for validation
+      - name: Publish Private Extension
+        if: ${{ !cancelled() }}
+        run: |
+          tfx extension publish --vsix ./private-extension.vsix --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
 
   scan:
     runs-on: ubuntu-latest
@@ -160,6 +161,7 @@ jobs:
   public_release:
     runs-on: ubuntu-latest
     needs: [build, scan]
+    if: ${{ always() && needs.build.result == 'success' }}
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -214,7 +216,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
         with:
-          node-version: "21.x"
+          node-version: "20.x"
           check-latest: true
 
       - name: Install NPM Packages
@@ -256,6 +258,7 @@ jobs:
   new_release:
     name: "Create new tagged release"
     needs: public_release
+    if: ${{ needs.public_release.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
