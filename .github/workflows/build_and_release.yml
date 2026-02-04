@@ -235,7 +235,7 @@ jobs:
 
       - name: Publish Public Extension
         run: |
-          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --public
+          tfx extension publish --manifest-globs vss-extension.json --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
 
       - name: Install Azure CLI
         run: |

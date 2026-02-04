@@ -42,5 +42,6 @@
       "id": "Microsoft.VisualStudio.Services"
     }
   ],
-  "version": "#{version}#"
+  "version": "#{version}#",
+  "public": true
 }
