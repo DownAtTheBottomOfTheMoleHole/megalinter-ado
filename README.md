@@ -25,6 +25,7 @@ MegaLinter is an Open-Source tool that analyzes your code consistency and qualit
 ### Target Audience
 
 This extension is designed for:
+
 - **Development Teams** implementing code quality standards in Azure DevOps
 - **DevOps Engineers** setting up CI/CD pipelines with automated quality gates
 - **Security Teams** requiring consistent SAST (Static Application Security Testing) across projects
@@ -37,22 +38,23 @@ This extension is designed for:
 
 This extension provides a comprehensive set of features to enhance your code quality workflow:
 
-| Feature | Description |
-|---------|-------------|
-| **50+ Language Support** | Analyze code in JavaScript, TypeScript, Python, Java, Go, C#, Ruby, PHP, Rust, and many more |
-| **Multiple Flavors** | Choose optimized Docker images for your tech stack (all, javascript, python, security, etc.) to reduce image size and pull time |
-| **PR Comment Integration** | Automatically post linting results as comments on pull requests for immediate developer feedback |
-| **Auto-Fix Capabilities** | Automatically fix code issues where supported and optionally create pull requests with the corrections |
-| **Docker Image Caching** | Built-in intelligent caching reduces Docker pull times in CI/CD pipelines |
-| **Flexible Configuration** | Configure via YAML file, environment variables, or task inputs—choose what works best for your team |
-| **Security Scanning** | Includes security-focused linters to catch vulnerabilities early in development |
-| **Customizable Reporting** | Generate detailed HTML, JSON, and text reports with configurable output paths |
-| **Incremental Linting** | Option to lint only changed files for faster feedback on pull requests |
-| **Build Integration** | Fails the build when critical issues are detected, enforcing quality gates |
+| Feature                    | Description                                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **50+ Language Support**   | Analyze code in JavaScript, TypeScript, Python, Java, Go, C#, Ruby, PHP, Rust, and many more                                    |
+| **Multiple Flavors**       | Choose optimized Docker images for your tech stack (all, javascript, python, security, etc.) to reduce image size and pull time |
+| **PR Comment Integration** | Automatically post linting results as comments on pull requests for immediate developer feedback                                |
+| **Auto-Fix Capabilities**  | Automatically fix code issues where supported and optionally create pull requests with the corrections                          |
+| **Docker Image Caching**   | Built-in intelligent caching reduces Docker pull times in CI/CD pipelines                                                       |
+| **Flexible Configuration** | Configure via YAML file, environment variables, or task inputs—choose what works best for your team                             |
+| **Security Scanning**      | Includes security-focused linters to catch vulnerabilities early in development                                                 |
+| **Customizable Reporting** | Generate detailed HTML, JSON, and text reports with configurable output paths                                                   |
+| **Incremental Linting**    | Option to lint only changed files for faster feedback on pull requests                                                          |
+| **Build Integration**      | Fails the build when critical issues are detected, enforcing quality gates                                                      |
 
 ### Supported Linters
 
 MegaLinter includes linters for:
+
 - **Languages**: JavaScript, TypeScript, Python, Java, Go, C#, PHP, Ruby, Rust, Swift, Kotlin, and more
 - **Formats**: JSON, YAML, XML, Markdown, HTML, CSS, SCSS
 - **Infrastructure as Code**: Terraform, Ansible, Dockerfile, Kubernetes
@@ -88,47 +90,48 @@ trigger:
   - main
 
 pool:
-  vmImage: 'ubuntu-latest'
+  vmImage: "ubuntu-latest"
 
 steps:
   - checkout: self
-    persistCredentials: true  # Required for PR comments and auto-fix PRs
+    persistCredentials: true # Required for PR comments and auto-fix PRs
 
   - task: MegaLinter@1
-    displayName: 'Run MegaLinter Code Analysis'
+    displayName: "Run MegaLinter Code Analysis"
     inputs:
-      flavor: 'all'  # Choose a flavor that matches your project
+      flavor: "all" # Choose a flavor that matches your project
     env:
-      SYSTEM_ACCESSTOKEN: $(System.AccessToken)  # Required for PR integration
+      SYSTEM_ACCESSTOKEN: $(System.AccessToken) # Required for PR integration
 ```
 
-**Screenshot Placeholder**: *Screenshot showing the Azure DevOps pipeline editor with the MegaLinter task added*
+**Screenshot Placeholder**: _Screenshot showing the Azure DevOps pipeline editor with the MegaLinter task added_
 
 #### Step 2: Configure the Task (Optional)
 
 You can configure the task through the UI or by editing the YAML directly:
 
 **Using the Azure DevOps Task Assistant:**
+
 1. In your pipeline editor, click "Show assistant" (right panel)
 2. Search for "MegaLinter"
 3. Configure the options through the UI form
 4. Click "Add" to insert the task into your pipeline
 
-**Screenshot Placeholder**: *Screenshot of the MegaLinter task configuration UI in Azure DevOps showing available options*
+**Screenshot Placeholder**: _Screenshot of the MegaLinter task configuration UI in Azure DevOps showing available options_
 
 **Common Configuration Options:**
 
 ```yaml
 - task: MegaLinter@1
-  displayName: 'Run MegaLinter'
+  displayName: "Run MegaLinter"
   inputs:
-    flavor: 'javascript'           # Optimized flavor for your stack
-    release: 'v9'                  # MegaLinter version
-    fix: true                      # Auto-fix issues
-    createFixPR: true              # Create PR with fixes
-    enablePRComments: true         # Post results as PR comments
-    path: '$(Build.SourcesDirectory)'  # Root directory to lint
-    disableLinters: 'SPELL_CSPELL' # Disable specific linters
+    flavor: "javascript" # Optimized flavor for your stack
+    release: "v9" # MegaLinter version
+    fix: true # Auto-fix issues
+    createFixPR: true # Create PR with fixes
+    enablePRComments: true # Post results as PR comments
+    path: "$(Build.SourcesDirectory)" # Root directory to lint
+    disableLinters: "SPELL_CSPELL" # Disable specific linters
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 ```
@@ -139,7 +142,7 @@ You can configure the task through the UI or by editing the YAML directly:
 2. The pipeline will automatically trigger
 3. MegaLinter will analyze your code and report results
 
-**Screenshot Placeholder**: *Screenshot showing a successful MegaLinter run in Azure DevOps with the task output*
+**Screenshot Placeholder**: _Screenshot showing a successful MegaLinter run in Azure DevOps with the task output_
 
 #### Step 4: Review Results
 
@@ -150,7 +153,7 @@ MegaLinter provides results through multiple channels:
 - **Reports**: HTML and JSON reports available as pipeline artifacts
 - **Build Status**: Pipeline fails if critical issues are found
 
-**Screenshot Placeholder**: *Screenshot showing MegaLinter PR comments on a pull request with linting feedback*
+**Screenshot Placeholder**: _Screenshot showing MegaLinter PR comments on a pull request with linting feedback_
 
 ### Advanced Usage Examples
 
@@ -159,12 +162,12 @@ MegaLinter provides results through multiple channels:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    flavor: 'javascript'
+    flavor: "javascript"
     fix: true
     createFixPR: true
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-    VALIDATE_ALL_CODEBASE: 'false'  # Only lint changed files
+    VALIDATE_ALL_CODEBASE: "false" # Only lint changed files
 ```
 
 #### Example 2: Python Project with Custom Configuration
@@ -172,9 +175,9 @@ MegaLinter provides results through multiple channels:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    flavor: 'python'
-    configFile: '.mega-linter.yml'
-    reportsPath: '$(Build.ArtifactStagingDirectory)/megalinter-reports'
+    flavor: "python"
+    configFile: ".mega-linter.yml"
+    reportsPath: "$(Build.ArtifactStagingDirectory)/megalinter-reports"
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 ```
@@ -184,10 +187,10 @@ MegaLinter provides results through multiple channels:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    flavor: 'security'
-    release: 'v9'
+    flavor: "security"
+    release: "v9"
   env:
-    ENABLE_LINTERS: 'CREDENTIALS,REPOSITORY,SECRETS'
+    ENABLE_LINTERS: "CREDENTIALS,REPOSITORY,SECRETS"
 ```
 
 #### Example 4: Multi-Language Project
@@ -195,8 +198,8 @@ MegaLinter provides results through multiple channels:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    flavor: 'all'
-    env: 'DISABLE_LINTERS=SPELL_CSPELL,COPYPASTE_JSCPD'
+    flavor: "all"
+    env: "DISABLE_LINTERS=SPELL_CSPELL,COPYPASTE_JSCPD"
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 ```
@@ -209,48 +212,48 @@ MegaLinter provides results through multiple channels:
 
 MegaLinter offers optimized flavors to reduce Docker image size and improve performance:
 
-| Flavor | Description | Use Case |
-|--------|-------------|----------|
-| **all** | All available linters (largest image) | Multi-language projects, comprehensive analysis |
-| **ci_light** | Lightweight CI optimized | Fast CI feedback, essential checks only |
-| **cupcake** | Popular linters for common projects | General-purpose projects |
-| **documentation** | Documentation files only | Documentation-heavy repositories |
-| **dotnet** | .NET projects | C#, F#, VB.NET applications |
-| **dotnetweb** | .NET web projects | ASP.NET, Blazor applications |
-| **formatters** | Code formatters only | Auto-formatting workflows |
-| **go** | Go projects | Go applications and libraries |
-| **java** | Java projects | Java, Kotlin, Scala applications |
-| **javascript** | JavaScript/TypeScript projects | Node.js, React, Angular, Vue applications |
-| **php** | PHP projects | PHP, Laravel, WordPress applications |
-| **python** | Python projects | Python applications and libraries |
-| **ruby** | Ruby projects | Ruby, Rails applications |
-| **rust** | Rust projects | Rust applications and libraries |
-| **salesforce** | Salesforce projects | Salesforce development |
-| **security** | Security-focused linters | Security audits, vulnerability scanning |
-| **swift** | Swift projects | iOS, macOS applications |
-| **terraform** | Terraform/IaC projects | Infrastructure as Code |
+| Flavor            | Description                           | Use Case                                        |
+| ----------------- | ------------------------------------- | ----------------------------------------------- |
+| **all**           | All available linters (largest image) | Multi-language projects, comprehensive analysis |
+| **ci_light**      | Lightweight CI optimized              | Fast CI feedback, essential checks only         |
+| **cupcake**       | Popular linters for common projects   | General-purpose projects                        |
+| **documentation** | Documentation files only              | Documentation-heavy repositories                |
+| **dotnet**        | .NET projects                         | C#, F#, VB.NET applications                     |
+| **dotnetweb**     | .NET web projects                     | ASP.NET, Blazor applications                    |
+| **formatters**    | Code formatters only                  | Auto-formatting workflows                       |
+| **go**            | Go projects                           | Go applications and libraries                   |
+| **java**          | Java projects                         | Java, Kotlin, Scala applications                |
+| **javascript**    | JavaScript/TypeScript projects        | Node.js, React, Angular, Vue applications       |
+| **php**           | PHP projects                          | PHP, Laravel, WordPress applications            |
+| **python**        | Python projects                       | Python applications and libraries               |
+| **ruby**          | Ruby projects                         | Ruby, Rails applications                        |
+| **rust**          | Rust projects                         | Rust applications and libraries                 |
+| **salesforce**    | Salesforce projects                   | Salesforce development                          |
+| **security**      | Security-focused linters              | Security audits, vulnerability scanning         |
+| **swift**         | Swift projects                        | iOS, macOS applications                         |
+| **terraform**     | Terraform/IaC projects                | Infrastructure as Code                          |
 
 For detailed flavor information, see the [MegaLinter Flavors Documentation](https://megalinter.io/latest/flavors/).
 
 ### Task Input Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `path` | string | `$(Pipeline.Workspace)` | Root directory containing files to lint |
-| `flavor` | string | `all` | MegaLinter flavor optimized for your stack |
-| `release` | string | `v9` | MegaLinter Docker image version |
-| `image` | string | - | Override Docker image (including custom registries) |
-| `fix` | boolean | `false` | Automatically apply fixes to your files |
-| `createFixPR` | boolean | `true` | Create a pull request with auto-fixes |
-| `enablePRComments` | boolean | `false` | Post linting results as PR comments |
-| `configFile` | string | - | Path to MegaLinter configuration file |
-| `reportsPath` | string | - | Directory for MegaLinter reports output |
-| `disableLinters` | string | - | Comma-separated list of linters to disable |
-| `env` | string | - | Environment variables for MegaLinter configuration |
-| `runnerVersion` | string | `latest` | Version of mega-linter-runner npm package |
-| `containerName` | string | - | Custom Docker container name |
-| `removeContainer` | boolean | `false` | Remove Docker container after completion |
-| `install` | boolean | `false` | Generate MegaLinter configuration files |
+| Parameter          | Type    | Default                 | Description                                         |
+| ------------------ | ------- | ----------------------- | --------------------------------------------------- |
+| `path`             | string  | `$(Pipeline.Workspace)` | Root directory containing files to lint             |
+| `flavor`           | string  | `all`                   | MegaLinter flavor optimized for your stack          |
+| `release`          | string  | `v9`                    | MegaLinter Docker image version                     |
+| `image`            | string  | -                       | Override Docker image (including custom registries) |
+| `fix`              | boolean | `false`                 | Automatically apply fixes to your files             |
+| `createFixPR`      | boolean | `true`                  | Create a pull request with auto-fixes               |
+| `enablePRComments` | boolean | `false`                 | Post linting results as PR comments                 |
+| `configFile`       | string  | -                       | Path to MegaLinter configuration file               |
+| `reportsPath`      | string  | -                       | Directory for MegaLinter reports output             |
+| `disableLinters`   | string  | -                       | Comma-separated list of linters to disable          |
+| `env`              | string  | -                       | Environment variables for MegaLinter configuration  |
+| `runnerVersion`    | string  | `latest`                | Version of mega-linter-runner npm package           |
+| `containerName`    | string  | -                       | Custom Docker container name                        |
+| `removeContainer`  | boolean | `false`                 | Remove Docker container after completion            |
+| `install`          | boolean | `false`                 | Generate MegaLinter configuration files             |
 
 ### Configuration File
 
@@ -284,7 +287,7 @@ When enabled, MegaLinter posts detailed linting results as comments directly on 
 - **Inline Feedback**: Issues are posted as comments on the specific lines of code
 - **Status Updates**: Summary comment shows overall linting status
 
-**Screenshot Placeholder**: *Screenshot showing MegaLinter comments on a pull request with file-level and line-level feedback*
+**Screenshot Placeholder**: _Screenshot showing MegaLinter comments on a pull request with file-level and line-level feedback_
 
 ### Auto-Fix Pull Requests
 
@@ -332,13 +335,14 @@ Add `persistCredentials: true` to your checkout step:
 
 Navigate to your Azure DevOps repository settings and grant the following permissions to the **Build Service** account:
 
-| Permission | Required For |
-|------------|--------------|
-| **Contribute** | Pushing auto-fix commits |
+| Permission                      | Required For                   |
+| ------------------------------- | ------------------------------ |
+| **Contribute**                  | Pushing auto-fix commits       |
 | **Contribute to pull requests** | Creating and commenting on PRs |
-| **Create branch** | Creating auto-fix branches |
+| **Create branch**               | Creating auto-fix branches     |
 
 **To configure permissions:**
+
 1. Go to Project Settings → Repositories → Your Repository
 2. Navigate to Security tab
 3. Find "{Project Name} Build Service ({Organization Name})"
@@ -361,15 +365,15 @@ MegaLinter automatically checks for cached Docker images before pulling, signifi
 
 ```yaml
 variables:
-  MEGALINTER_IMAGE: 'oxsecurity/megalinter-javascript:v9'
+  MEGALINTER_IMAGE: "oxsecurity/megalinter-javascript:v9"
 
 steps:
   # Cache Docker images using Pipeline Caching
   - task: Cache@2
-    displayName: 'Cache Docker images'
+    displayName: "Cache Docker images"
     inputs:
       key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
-      path: '$(Pipeline.Workspace)/docker-cache'
+      path: "$(Pipeline.Workspace)/docker-cache"
       restoreKeys: |
         docker | "$(Agent.OS)"
 
@@ -379,19 +383,19 @@ steps:
         docker load -i $(Pipeline.Workspace)/docker-cache/megalinter.tar
         echo "Loaded cached Docker image"
       fi
-    displayName: 'Load cached Docker image'
+    displayName: "Load cached Docker image"
 
   # Run MegaLinter (will skip pull if image loaded from cache)
   - task: MegaLinter@1
     inputs:
-      flavor: 'javascript'
-      release: 'v9'
+      flavor: "javascript"
+      release: "v9"
 
   # Save image to cache after run
   - script: |
       mkdir -p $(Pipeline.Workspace)/docker-cache
       docker save $(MEGALINTER_IMAGE) -o $(Pipeline.Workspace)/docker-cache/megalinter.tar
-    displayName: 'Save Docker image to cache'
+    displayName: "Save Docker image to cache"
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
 ```
 
@@ -407,6 +411,7 @@ steps:
 ## Documentation
 
 ### Extension Documentation
+
 - [Configuration Guide](docs/CONFIGURATION.md) - Advanced configuration options and environment variables
 - [Flavors Reference](docs/FLAVORS.md) - Complete list of available MegaLinter flavors
 - [Changelog](CHANGELOG.md) - Version history and release notes
@@ -414,6 +419,7 @@ steps:
 - [Security Policy](SECURITY.md) - Security guidelines and vulnerability reporting
 
 ### MegaLinter Documentation
+
 - [MegaLinter Official Documentation](https://megalinter.io/latest/)
 - [Supported Linters](https://megalinter.io/latest/supported-linters/)
 - [Configuration Options](https://megalinter.io/latest/configuration/)
@@ -453,8 +459,6 @@ We appreciate contributions from the community! Here's how you can help:
 - 👀 Watch the repository for updates
 - 🐛 Report issues to help improve the extension
 
-
-
 ---
 
 ## Frequently Asked Questions
@@ -462,6 +466,7 @@ We appreciate contributions from the community! Here's how you can help:
 ### Q: Which flavor should I use for my project?
 
 **A:** Choose based on your primary tech stack:
+
 - Single-language projects: Use the specific flavor (e.g., `javascript`, `python`, `dotnet`)
 - Multi-language projects: Start with `cupcake` for common linters, or `all` for comprehensive coverage
 - Security audits: Use the `security` flavor
@@ -469,7 +474,8 @@ We appreciate contributions from the community! Here's how you can help:
 
 ### Q: How do I reduce pipeline execution time?
 
-**A:** 
+**A:**
+
 1. Use a specific flavor instead of `all` to reduce Docker image size
 2. Enable Docker image caching (see [Performance Optimization](#performance-optimization))
 3. Set `VALIDATE_ALL_CODEBASE: false` to lint only changed files
@@ -479,6 +485,7 @@ We appreciate contributions from the community! Here's how you can help:
 ### Q: Why is my build failing after adding MegaLinter?
 
 **A:** MegaLinter intentionally fails the build when linting issues are detected. This enforces quality gates. To address:
+
 1. Review the linting errors in the task output
 2. Fix the issues in your code
 3. Or configure MegaLinter to disable specific linters: `disableLinters: 'LINTER_NAME'`
@@ -491,7 +498,7 @@ We appreciate contributions from the community! Here's how you can help:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    image: 'myregistry.azurecr.io/megalinter:custom'
+    image: "myregistry.azurecr.io/megalinter:custom"
 ```
 
 ### Q: How do I disable specific linters?
@@ -501,10 +508,11 @@ We appreciate contributions from the community! Here's how you can help:
 ```yaml
 - task: MegaLinter@1
   inputs:
-    disableLinters: 'SPELL_CSPELL,MARKDOWN_MARKDOWNLINT'
+    disableLinters: "SPELL_CSPELL,MARKDOWN_MARKDOWNLINT"
 ```
 
 Or in `.mega-linter.yml`:
+
 ```yaml
 DISABLE_LINTERS:
   - SPELL_CSPELL
@@ -516,6 +524,7 @@ DISABLE_LINTERS:
 ## Roadmap
 
 ### Completed ✅
+
 - [x] Basic extension skeleton
 - [x] Streaming output and Docker caching
 - [x] PR comment and auto-fix PR features
@@ -524,11 +533,13 @@ DISABLE_LINTERS:
 - [x] Comprehensive task input parameters
 
 ### In Progress 🚧
+
 - [ ] Improved test coverage
 - [ ] Marketplace publishing automation
 - [ ] Enhanced error handling and diagnostics
 
 ### Planned 📋
+
 - [ ] Visual task configuration templates
 - [ ] Integration with Azure DevOps test results
 - [ ] Support for custom reporter configurations
@@ -555,6 +566,7 @@ This extension is built using modern tools and frameworks:
 ### Development Tools
 
 This repository uses pre-commit hooks for code quality:
+
 - JSON/YAML validation
 - Secret detection with `detect-secrets`
 - Line ending normalization
@@ -563,8 +575,6 @@ This repository uses pre-commit hooks for code quality:
 - MegaLinter incremental checks
 
 See `.pre-commit-config.yaml` for the complete configuration.
-
-
 
 ---
 
@@ -592,6 +602,7 @@ This project is licensed under the **GPL-3.0 License**. See [LICENSE.md](LICENSE
 ### Third-Party Licenses
 
 This extension uses the following open-source projects:
+
 - **MegaLinter**: MIT License
 - **azure-pipelines-task-lib**: MIT License
 - **TypeScript**: Apache License 2.0
