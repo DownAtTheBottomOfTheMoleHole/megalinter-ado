@@ -31,7 +31,7 @@ Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelin
 Configure MegaLinter using the Azure DevOps task assistant:
 
 <!-- TODO: Add screenshot of task configuration UI -->
-![Task Configuration](docs/images/task-config.png)
+![Task Configuration](.assets/screenshot.png)
 
 ## Task Inputs
 
