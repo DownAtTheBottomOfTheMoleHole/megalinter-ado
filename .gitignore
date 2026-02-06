@@ -28,5 +28,4 @@ Thumbs.db
 
 # pre-commit_logs
 .pre-commit_logs/
-.pre-commit_logs/*.log
 megalinter-reports/
