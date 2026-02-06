@@ -11,9 +11,6 @@
   },
   "friendlyName": "#{task_friendlyname}#",
   "helpMarkDown": "#{task_helpmarkdown}#",
-  "icons": {
-    "default": "icon.png"
-  },
   "id": "#{task_id}#",
   "inputs": [
     {
