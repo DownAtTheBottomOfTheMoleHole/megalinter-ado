@@ -62,7 +62,12 @@
   "name": "#{public_extensionName}#",
   "publisher": "#{publisherId}#",
   "tags": [
-    "sast"
+    "sast",
+    "linter",
+    "code-quality",
+    "megalinter",
+    "devops",
+    "ci-cd"
   ],
   "targets": [
     {

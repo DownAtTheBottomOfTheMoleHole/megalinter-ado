@@ -47,7 +47,7 @@ Configure MegaLinter using the Azure DevOps task assistant:
 | `reportsPath` | Reports output directory | `megalinter-reports` |
 | `disableLinters` | Comma-separated linters to disable | - |
 
-See [all available inputs](docs/CONFIGURATION.md) for the complete list.
+See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 
 ## Flavors
 
@@ -151,9 +151,31 @@ SHOW_ELAPSED_TIME: true
 ## Resources
 
 - [MegaLinter Documentation](https://megalinter.io)
-- [Configuration Guide](docs/CONFIGURATION.md)
-- [Available Flavors](docs/FLAVORS.md)
+- [Configuration Guide](https://megalinter.io/latest/configuration/)
+- [Available Flavors](https://megalinter.io/latest/flavors/)
 - [GitHub Repository](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado)
+
+## Development
+
+### Prerequisites
+- Node.js >= 20.0.0
+- npm >= 10.0.0
+
+### Setup
+```bash
+npm install
+cd megalinter && npm install
+```
+
+### Build & Test
+```bash
+cd megalinter
+npm run build
+npm test
+```
+
+### Contributing
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

@@ -18,7 +18,7 @@ Thank you for your interest in contributing! We welcome all contributions.
 - Example: `fix(lint): correct Docker image logic`
 
 ## Reporting Issues
-- Use [GitHub Issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/issues) for bugs and feature requests.
+- Use [GitHub Issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues) for bugs and feature requests.
 
 ## Community
 - Be respectful and inclusive. See our [Code of Conduct](CODE_OF_CONDUCT.md).
