@@ -1,88 +1,160 @@
 # MegaLinter Azure DevOps Extension
 
+[![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-MegaLinter-blue?logo=azure-devops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.megalinter-ado)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE.md)
 [![MegaLinter](https://img.shields.io/badge/MegaLinter-v9-success)](https://megalinter.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green)](https://nodejs.org/)
 
-Easily run [Ox Security MegaLinter](https://megalinter.io/latest/) in your Azure DevOps pipelines with a simple, UI-driven task.
+Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelines. Analyze 50+ languages, apply auto-fixes, and get PR comments—all with a simple task configuration.
 
-## Features
-- One-click code quality for 50+ languages and formats
-- PR comment reporting and auto-fix PRs (with permissions)
-- Docker image caching for fast CI
-- All MegaLinter options exposed as task inputs
+## Installation
+
+1. Install from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.megalinter-ado)
+2. Add the task to your pipeline
 
 ## Quick Start
+
 ```yaml
 - task: MegaLinter@1
   displayName: Run MegaLinter
   inputs:
-    flavor: all         # or security, javascript, etc.
-    fix: true           # auto-fix issues (optional)
-    createFixPR: true   # create PR with fixes (requires permissions)
+    flavor: all
+    fix: true
+    createFixPR: true
   env:
     SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 ```
 
-## Pull Request Integration
-- **PR Comments:** Auto-enabled for PR builds, or set `enablePRComments: true`.
-- **Auto-Fix PRs:** Set `fix: true` and `createFixPR: true` to open a PR with fixes.
-- **Permissions Required:** See [Required Permissions](#required-permissions) below.
+## Visual Configuration
 
-## Documentation
+Configure MegaLinter using the Azure DevOps task assistant:
+
+<!-- TODO: Add screenshot of task configuration UI -->
+![Task Configuration](.assets/screenshot.png)
+
+## Task Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `flavor` | MegaLinter flavor (all, javascript, python, security, etc.) | `all` |
+| `release` | Docker image tag (v9, latest, etc.) | `v9` |
+| `fix` | Auto-fix issues | `false` |
+| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds) | `false` |
+| `createFixPR` | Create PR with fixes (when fix=true) | `true` |
+| `path` | Directory to lint | Pipeline workspace |
+| `configFile` | Path to .mega-linter.yml | Auto-detected |
+| `reportsPath` | Reports output directory | `megalinter-reports` |
+| `disableLinters` | Comma-separated linters to disable | - |
+
+See [all available inputs](docs/CONFIGURATION.md) for the complete list.
+
+## Flavors
+
+| Flavor | Languages |
+|--------|-----------|
+| `all` | Everything (largest image) |
+| `javascript` | JS, TS, JSON, CSS, HTML |
+| `python` | Python, YAML, JSON |
+| `dotnet` | C#, VB.NET, PowerShell |
+| `security` | Security-focused linters only |
+| `terraform` | Terraform, HCL |
+
+[View all flavors](https://megalinter.io/latest/flavors/)
+
+## Full Pipeline Example
+
+This example shows all available options with Docker caching for faster runs:
+
+```yaml
+# .azuredevops/megalinter.yml
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  MEGALINTER_IMAGE: oxsecurity/megalinter-security:v9
+
+stages:
+  - stage: Lint
+    jobs:
+      - job: MegaLinter
+        steps:
+          - checkout: self
+            fetchDepth: 0
+
+          # Cache Docker images for faster runs
+          - task: Cache@2
+            displayName: Cache Docker images
+            inputs:
+              key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
+              path: $(Pipeline.Workspace)/docker-cache
+
+          - script: |
+              if [ -f "$(Pipeline.Workspace)/docker-cache/megalinter.tar" ]; then
+                docker load -i $(Pipeline.Workspace)/docker-cache/megalinter.tar
+              fi
+            displayName: Load cached Docker image
+
+          # Run MegaLinter
+          - task: MegaLinter@1
+            displayName: Run MegaLinter
+            inputs:
+              path: $(Build.SourcesDirectory)
+              flavor: security
+              release: v9
+              fix: true
+              removeContainer: true
+              enablePRComments: true
+              createFixPR: true
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+
+          # Save Docker image to cache
+          - script: |
+              mkdir -p $(Pipeline.Workspace)/docker-cache
+              docker save $(MEGALINTER_IMAGE) -o $(Pipeline.Workspace)/docker-cache/megalinter.tar
+            displayName: Save Docker image to cache
+            condition: succeededOrFailed()
+
+          # Publish reports
+          - task: PublishBuildArtifacts@1
+            displayName: Publish MegaLinter Reports
+            condition: succeededOrFailed()
+            inputs:
+              pathToPublish: $(Build.SourcesDirectory)/megalinter-reports
+              artifactName: megalinter-reports
+```
+
+## Permissions
+
+For PR comments and auto-fix PRs, grant the build service:
+
+1. **Contribute to pull requests** - For PR comments
+2. **Create branch** - For auto-fix PR creation
+
+## Configuration
+
+Create a `.mega-linter.yml` in your repository root:
+
+```yaml
+APPLY_FIXES: all
+DISABLE_LINTERS:
+  - SPELL_CSPELL
+SHOW_ELAPSED_TIME: true
+```
+
+[Full configuration options](https://megalinter.io/latest/configuration/)
+
+## Resources
+
+- [MegaLinter Documentation](https://megalinter.io)
 - [Configuration Guide](docs/CONFIGURATION.md)
-- [Flavors Reference](docs/FLAVORS.md)
-- [Changelog](CHANGELOG.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security Policy](SECURITY.md)
-
-## Required Permissions
-To use PR comments or auto-fix PRs, your pipeline must:
-- Pass `SYSTEM_ACCESSTOKEN` to the task
-- Use `persistCredentials: true` on checkout
-- Grant the Build Service account these repo permissions: **Contribute**, **Contribute to pull requests**, **Create branch**
-
-See the [full permissions guide](docs/CONFIGURATION.md#required-permissions).
-
----
-
-## Built With
-- [TypeScript](https://www.typescriptlang.org/)
-- [MegaLinter](https://megalinter.io/latest/)
-- [azure-pipelines-task-lib](https://www.npmjs.com/package/azure-pipelines-task-lib)
-- [Prettier](https://prettier.io/)
-- [pre-commit](https://pre-commit.com/)
-- [CSpell](https://cspell.org/)
-- [GitVersion](https://gitversion.net/)
-
-## Pre-commit Hooks
-This repo uses [pre-commit](https://pre-commit.com/) for code quality and consistency:
-- JSON/YAML validation
-- Secret detection
-- Line ending normalization
-- CSpell, Prettier, MegaLinter incremental checks
-
-See `.pre-commit-config.yaml` for the full list.
-
-## Roadmap
-- [x] Basic extension skeleton
-- [x] Streaming output and Docker caching
-- [x] PR comment and auto-fix PR features
-- [x] Documentation and permission guidance
-- [ ] More flavors and config options
-- [ ] Improved test coverage
-- [ ] Marketplace publishing automation
-- [ ] Community feedback and enhancements
-
-See [CHANGELOG.md](CHANGELOG.md) and [issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/issues) for details.
-
-## Acknowledgements
-- MegaLinter is an [Ox Security](https://ox.security/) project. This extension is **unofficial** but built with permission from Ox Security.
-- Thanks to the MegaLinter and Azure DevOps communities for inspiration and support.
-
-## Contributors
-Made with ❤️ by [@RolfMoleman](https://github.com/RolfMoleman)
+- [Available Flavors](docs/FLAVORS.md)
+- [GitHub Repository](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado)
 
 ## License
-GPL-3.0. See [LICENSE.md](LICENSE.md).
+
+[GPL-3.0](LICENSE.md)

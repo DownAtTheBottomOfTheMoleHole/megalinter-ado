@@ -9,6 +9,9 @@
   "content": {
     "details": {
       "path": "README.md"
+    },
+    "license": {
+      "path": "LICENSE.md"
     }
   },
   "contributions": [
@@ -37,6 +40,24 @@
     "default": ".assets/extension-icon.png"
   },
   "id": "#{public_extensionId}#",
+  "links": {
+    "repository": {
+      "type": "git",
+      "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado"
+    },
+    "issues": {
+      "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues"
+    },
+    "support": {
+      "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues"
+    },
+    "getstarted": {
+      "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado#quick-start"
+    },
+    "license": {
+      "uri": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/blob/main/LICENSE.md"
+    }
+  },
   "manifestVersion": 1,
   "name": "#{public_extensionName}#",
   "publisher": "#{publisherId}#",
