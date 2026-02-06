@@ -27,5 +27,6 @@ ehthumbs.db
 Thumbs.db
 
 # pre-commit_logs
-.pre-commit-logs/*.log
+.pre-commit_logs/
+.pre-commit_logs/*.log
 megalinter-reports/

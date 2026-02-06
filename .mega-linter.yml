@@ -1,24 +1,65 @@
-# Configuration file for MegaLinter
-#
-# See all available variables at https://megalinter.io/latest/config-file/ and in
-# linters documentation
-
-# all, none, or list of linter keys
-APPLY_FIXES: all
-
-# If you use ENABLE variable, all other languages/formats/tooling-formats will
-# be disabled by default
-# ENABLE:
-
-# If you use ENABLE_LINTERS variable, all other linters will be disabled by
-# default
-# ENABLE_LINTERS:
-
-# DISABLE:
-# - COPYPASTE # Uncomment to disable checks of excessive copy-pastes
-# - SPELL # Uncomment to disable checks of spelling mistakes
-
+APPLY_FIXES: all # all, none, or list of linter keys
+AZURE_COMMENT_REPORTER: true
+AZURE_COMMENT_REPORTER_LINKS_TYPE: artifacts #Set to build if you want comments linking to target Build and not artifacts page DEFAULT: artifacts
+CLEAR_REPORT_FOLDER: true
+CONFIG_REPORTER: true
+CONFIG_REPORTER_SUB_FOLDER: IDE-config
+ENABLE_LINTERS: # If ENABLE_LINTERS is set, only listed linters will be processed
+  - "ANSIBLE_ANSIBLE_LINT"
+  - "KUBERNETES_KUBESCAPE"
+  - "REPOSITORY_CHECKOV"
+  - "REPOSITORY_DUSTILOCK"
+  - "REPOSITORY_GITLEAKS"
+  - "REPOSITORY_SEMGREP"
+  - "REPOSITORY_TRIVY"
+  - "TERRAFORM_TERRASCAN"
+  - "TERRAFORM_TFLINT"
+FAIL_IF_MISSING_LINTER_IN_FLAVOR: false # If set to true, MegaLinter fails if a linter is missing in the selected flavour
+FAIL_IF_UPDATED_SOURCES: false # If set to true, MegaLinter fails if a linter or formatter has auto-fixed sources, even if there are no errors
+FILEIO_REPORTER: false #if set to true this will generate a hyperlink to a report on file.io DO NOT ENABLE
+FLAVOR_SUGGESTIONS: true # Provides suggestions about different MegaLinter flavors to use to improve runtime performances
+FORMATTERS_DISABLE_ERRORS: true # Formatter errors will be reported as errors (and not warnings) if this variable is set to false
+JSON_REPORTER: true
+JSON_REPORTER_OUTPUT_DETAIL: "detailed"
+MARKDOWN_DEFAULT_STYLE: markdownlint
+PRINT_ALPACA: true
+PRINT_ALL_FILES: true
+REPOSITORY_CHECKOV_ARGUMENTS:
+  - "--include-all-checkov-policies" # settings to allow integration with bridgecrew using pipeline variables
+REPOSITORY_CHECKOV_DISABLE_ERRORS: false #Run linter but consider errors as warnings default to false
+REPOSITORY_CHECKOV_DISABLE_ERRORS_IF_LESS_THAN: 0 # Maximum number of errors allowed default is 0
+REPOSITORY_DEVSKIM_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_DEVSKIM_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_DUSTILOCK_DISABLE_ERRORS: false #Run linter but consider errors as warnings	false
+REPOSITORY_DUSTILOCK_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_KICS_CONFIG_FILE: LINTER_DEFAULT #kics configuration file nameUse LINTER_DEFAULT to let the linter find it DEFAULT: kics.config
+REPOSITORY_KICS_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_KICS_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_KICS_RULES_PATH: .config #Path where to find linter configuration file DEFAULT: Workspace folder, then MegaLinter default rules
+REPOSITORY_SEMGREP_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_SEMGREP_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_SEMGREP_RULESETS: auto # List of semgrep rulesets identifiers that you want to enforce DEFAULT: auto
+REPOSITORY_TRIVY_CONFIG_FILE: LINTER_DEFAULT # trivy configuration file name Use LINTER_DEFAULT to let the linter find it, default is trivy.yaml
+REPOSITORY_TRIVY_DISABLE_ERRORS: false # Run linter but consider errors as warnings default is false
+REPOSITORY_TRIVY_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed, default is	0
+REPOSITORY_TRIVY_UNSECURED_ENV_VARIABLES: [] #List of env variables explicitly not filtered before calling REPOSITORY_TRIVY and its pre/post commands	None
+REPORTERS_MARKDOWN_TYPE: advanced #Set to simple to avoid external images in generated markdown
+REPORT_OUTPUT_FOLDER: ./megalinter-reports # Directory for generating report files. Set to none to not generate reports
+SARIF_REPORTER: true # new feature
 SHOW_ELAPSED_TIME: true
-
-# Uncomment if you want MegaLinter to detect errors but not block CI to pass
-# DISABLE_ERRORS: true
+SHOW_SKIPPED_LINTERS: true
+TAP_REPORTER: true #if set to true reports all results as tap files, do this to convert to JUnit to keep a standardised test result format
+TAP_REPORTER_SUB_FOLDER: tap #if enabled allows you to define a different folder location for the tap result files. tap is the default directory
+TERRAFORM_TERRASCAN_ARGUMENTS:
+  - "--verbose"
+  - "--show-passed"
+TERRAFORM_TERRASCAN_CONFIG_FILE: LINTER_DEFAULT # terrascan configuration file nameUse LINTER_DEFAULT to let the linter find it DEFAULT: terrascan-config.toml
+TERRAFORM_TERRASCAN_DISABLE_ERRORS: false #Run linter but consider errors as warnings	DEFAULT: false
+TERRAFORM_TERRASCAN_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+TERRAFORM_TFLINT_ARGUMENTS:
+  - "--color"
+TEXT_REPORTER: true #this is enabled by default anyway, but i find it is nicer to specifically declare it
+TEXT_REPORTER_SUB_FOLDER: text #if enabled allows you to define a different folder location for the text result files.
+TYPESCRIPT_DEFAULT_STYLE: prettier # Typescript default style to check/apply. standard,prettier
+UPDATED_SOURCES_REPORTER: true #Activates/deactivates reporter DEFAULT: true
+UPDATED_SOURCES_REPORTER_DIR: updated_sources #Sub-folder of reports folder containing updated sources DEFAULT: updated_sources
