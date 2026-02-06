@@ -10,15 +10,19 @@ Thank you for your interest in contributing! We welcome all contributions.
 - Open a pull request with a clear description of your changes.
 
 ## Code Style
+
 - Use Prettier for formatting.
 - Follow the existing TypeScript and YAML conventions.
 
 ## Commit Messages
+
 - Use [Conventional Commits](https://www.conventionalcommits.org/).
 - Example: `fix(lint): correct Docker image logic`
 
 ## Reporting Issues
+
 - Use [GitHub Issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues) for bugs and feature requests.
 
 ## Community
+
 - Be respectful and inclusive. See our [Code of Conduct](CODE_OF_CONDUCT.md).

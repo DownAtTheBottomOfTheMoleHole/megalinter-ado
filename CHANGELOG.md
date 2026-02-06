@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - PR comment reporter for Azure DevOps pull requests
 - Auto-fix PR creation when `fix: true` and `createFixPR: true`
 - Docker image caching for faster pipeline runs
@@ -17,22 +18,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disable specific linters via `disableLinters` input
 
 ### Changed
+
 - Updated MegaLinter default version to v9
 - Improved error handling and exit code reporting
 - Better documentation with configuration examples
 
 ### Fixed
+
 - Resolved npm audit vulnerabilities (tar, lodash-es, diff)
 - Updated ts-node from v1.7.3 to v10.9.2
 - License consistency (now GPL-3.0 across all package.json files)
 
 ### Security
+
 - Updated all dependencies to resolve known vulnerabilities
 - Proper secrets handling via GitHub Secrets and Azure DevOps variable groups
 
 ## [1.0.0] - Initial Release
 
 ### Added
+
 - Initial MegaLinter Azure DevOps extension
 - Support for all MegaLinter flavors
 - Docker-based execution via mega-linter-runner

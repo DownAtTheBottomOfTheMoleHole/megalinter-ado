@@ -31,34 +31,35 @@ Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelin
 Configure MegaLinter using the Azure DevOps task assistant:
 
 <!-- TODO: Add screenshot of task configuration UI -->
+
 ![Task Configuration](.assets/screenshot.png)
 
 ## Task Inputs
 
-| Input | Description | Default |
-|-------|-------------|---------|
-| `flavor` | MegaLinter flavor (all, javascript, python, security, etc.) | `all` |
-| `release` | Docker image tag (v9, latest, etc.) | `v9` |
-| `fix` | Auto-fix issues | `false` |
-| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds) | `false` |
-| `createFixPR` | Create PR with fixes (when fix=true) | `true` |
-| `path` | Directory to lint | Pipeline workspace |
-| `configFile` | Path to .mega-linter.yml | Auto-detected |
-| `reportsPath` | Reports output directory | `megalinter-reports` |
-| `disableLinters` | Comma-separated linters to disable | - |
+| Input              | Description                                                 | Default              |
+| ------------------ | ----------------------------------------------------------- | -------------------- |
+| `flavor`           | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
+| `release`          | Docker image tag (v9, latest, etc.)                         | `v9`                 |
+| `fix`              | Auto-fix issues                                             | `false`              |
+| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
+| `createFixPR`      | Create PR with fixes (when fix=true)                        | `true`               |
+| `path`             | Directory to lint                                           | Pipeline workspace   |
+| `configFile`       | Path to .mega-linter.yml                                    | Auto-detected        |
+| `reportsPath`      | Reports output directory                                    | `megalinter-reports` |
+| `disableLinters`   | Comma-separated linters to disable                          | -                    |
 
 See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 
 ## Flavors
 
-| Flavor | Languages |
-|--------|-----------|
-| `all` | Everything (largest image) |
-| `javascript` | JS, TS, JSON, CSS, HTML |
-| `python` | Python, YAML, JSON |
-| `dotnet` | C#, VB.NET, PowerShell |
-| `security` | Security-focused linters only |
-| `terraform` | Terraform, HCL |
+| Flavor       | Languages                     |
+| ------------ | ----------------------------- |
+| `all`        | Everything (largest image)    |
+| `javascript` | JS, TS, JSON, CSS, HTML       |
+| `python`     | Python, YAML, JSON            |
+| `dotnet`     | C#, VB.NET, PowerShell        |
+| `security`   | Security-focused linters only |
+| `terraform`  | Terraform, HCL                |
 
 [View all flavors](https://megalinter.io/latest/flavors/)
 
@@ -158,16 +159,19 @@ SHOW_ELAPSED_TIME: true
 ## Development
 
 ### Prerequisites
+
 - Node.js >= 20.0.0
 - npm >= 10.0.0
 
 ### Setup
+
 ```bash
 npm install
 cd megalinter && npm install
 ```
 
 ### Build & Test
+
 ```bash
 cd megalinter
 npm run build
@@ -175,6 +179,7 @@ npm test
 ```
 
 ### Contributing
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License

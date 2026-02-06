@@ -3,9 +3,7 @@
     "color": "rgb(32, 68, 134)",
     "theme": "dark"
   },
-  "categories": [
-    "Azure Pipelines"
-  ],
+  "categories": ["Azure Pipelines"],
   "content": {
     "details": {
       "path": "README.md"
@@ -20,9 +18,7 @@
       "properties": {
         "name": "#{task_name}#"
       },
-      "targets": [
-        "ms.vss-distributed-task.tasks"
-      ],
+      "targets": ["ms.vss-distributed-task.tasks"],
       "type": "ms.vss-distributed-task.task"
     }
   ],
@@ -61,14 +57,7 @@
   "manifestVersion": 1,
   "name": "#{public_extensionName}#",
   "publisher": "#{publisherId}#",
-  "tags": [
-    "sast",
-    "linter",
-    "code-quality",
-    "megalinter",
-    "devops",
-    "ci-cd"
-  ],
+  "tags": ["sast", "linter", "code-quality", "megalinter", "devops", "ci-cd"],
   "targets": [
     {
       "id": "Microsoft.VisualStudio.Services"
