@@ -1,20 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "Renovate config for megalinter-ado Azure DevOps extension",
-  "extends": [
-    "config:best-practices",
-    "group:allNonMajor"
-  ],
-  "addLabels": [
-    "renovate",
-    "bot",
-    "dependencies"
-  ],
+  "extends": ["config:best-practices", "group:allNonMajor"],
+  "addLabels": ["renovate", "bot", "dependencies"],
   "gitAuthor": "DBMH Renovate <renovate@dbmh.com>",
   "timezone": "GB",
-  "schedule": [
-    "after 9am and before 5pm every weekday"
-  ],
+  "schedule": ["after 9am and before 5pm every weekday"],
   "prConcurrentLimit": 5,
   "prHourlyLimit": 2,
   "prCreation": "immediate",
@@ -27,83 +18,47 @@
   "updatePinnedDependencies": true,
   "useBaseBranchConfig": "merge",
   "unicodeEmoji": true,
-  "hostRules": [
-    {
-      "hostType": "github",
-      "matchHost": "github.com",
-      "token": "${PAT}"
-    }
-  ],
   "packageRules": [
     {
       "description": "Dont update Azure Pipelines tasks, it breaks things",
       "enabled": false,
       "extractVersion": "^(?<version>\\d+)",
-      "matchDatasources": [
-        "azure-pipelines-tasks"
-      ]
+      "matchDatasources": ["azure-pipelines-tasks"]
     },
     {
       "description": "Require manual merge for all major updates",
-      "matchUpdateTypes": [
-        "major"
-      ],
+      "matchUpdateTypes": ["major"],
       "automerge": false,
-      "addLabels": [
-        "Semver Major"
-      ]
+      "addLabels": ["Semver Major"]
     },
     {
       "description": "Auto-label minor updates",
-      "matchUpdateTypes": [
-        "minor"
-      ],
-      "addLabels": [
-        "Semver Minor"
-      ]
+      "matchUpdateTypes": ["minor"],
+      "addLabels": ["Semver Minor"]
     },
     {
       "description": "Auto-label patch updates",
-      "matchUpdateTypes": [
-        "patch"
-      ],
-      "addLabels": [
-        "Semver Patch"
-      ]
+      "matchUpdateTypes": ["patch"],
+      "addLabels": ["Semver Patch"]
     },
     {
       "description": "Pin digests for GitHub Actions for supply-chain security",
-      "matchDatasources": [
-        "github-tags",
-        "github-releases"
-      ],
-      "matchPackageNames": [
-        "/^actions//"
-      ],
+      "matchDatasources": ["github-tags", "github-releases"],
+      "matchPackageNames": ["/^actions//"],
       "pinDigests": true,
-      "addLabels": [
-        "GitHub Actions"
-      ]
+      "addLabels": ["GitHub Actions"]
     },
     {
       "description": "Group GitHub Actions updates together",
-      "matchManagers": [
-        "github-actions"
-      ],
+      "matchManagers": ["github-actions"],
       "groupName": "GitHub Actions",
-      "addLabels": [
-        "GitHub Actions"
-      ]
+      "addLabels": ["GitHub Actions"]
     },
     {
       "description": "Group pre-commit hook updates together",
-      "matchManagers": [
-        "pre-commit"
-      ],
+      "matchManagers": ["pre-commit"],
       "groupName": "pre-commit hooks",
-      "addLabels": [
-        "linting"
-      ]
+      "addLabels": ["linting"]
     },
     {
       "description": "Group MegaLinter-related updates (runner, pre-commit hook, Docker image)",
@@ -113,19 +68,13 @@
         "oxsecurity/megalinter-security"
       ],
       "groupName": "MegaLinter",
-      "addLabels": [
-        "MegaLinter"
-      ]
+      "addLabels": ["MegaLinter"]
     },
     {
       "description": "Group Azure Pipelines task library updates",
-      "matchPackageNames": [
-        "azure-pipelines-task-lib"
-      ],
+      "matchPackageNames": ["azure-pipelines-task-lib"],
       "groupName": "Azure Pipelines Task Lib",
-      "addLabels": [
-        "Azure Pipelines"
-      ]
+      "addLabels": ["Azure Pipelines"]
     },
     {
       "description": "Group TypeScript tooling updates",
@@ -150,24 +99,14 @@
     },
     {
       "description": "Group linting and formatting tool updates",
-      "matchPackageNames": [
-        "eslint",
-        "@eslint/js",
-        "prettier"
-      ],
+      "matchPackageNames": ["eslint", "@eslint/js", "prettier"],
       "groupName": "linters and formatters",
-      "addLabels": [
-        "linting"
-      ]
+      "addLabels": ["linting"]
     },
     {
       "description": "Label security scanner updates",
-      "matchPackageNames": [
-        "Yelp/detect-secrets"
-      ],
-      "addLabels": [
-        "security"
-      ]
+      "matchPackageNames": ["Yelp/detect-secrets"],
+      "addLabels": ["security"]
     }
   ]
 }
