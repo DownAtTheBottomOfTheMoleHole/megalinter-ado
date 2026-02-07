@@ -98,19 +98,8 @@ jobs:
         run: |
           tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
 
-      - name: Create and push version tag
-        if: steps.publish-private.outcome == 'success'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Check if tag already exists in remote repository
-          if [ -z "$(git ls-remote --tags origin "v${{ env.GitVersion_MajorMinorPatch }}")" ]; then
-            git tag -a "v${{ env.GitVersion_MajorMinorPatch }}" -m "Release version ${{ env.GitVersion_MajorMinorPatch }}"
-            git push origin "v${{ env.GitVersion_MajorMinorPatch }}"
-            echo "Successfully created and pushed tag v${{ env.GitVersion_MajorMinorPatch }}"
-          else
-            echo "Tag v${{ env.GitVersion_MajorMinorPatch }} already exists in remote repository, skipping tag creation"
-          fi
+      # Note: Tag creation has been moved to the new_release job to ensure it only happens
+      # after successful public release, not after private extension publish
 
   scan:
     runs-on: ubuntu-latest
@@ -172,11 +161,23 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
         working-directory: ${{ github.workspace }}
 
+      - name: Check if PAT is available
+        id: check-pat
+        run: |
+          if [ -n "${{ secrets.PAT }}" ]; then
+            echo "pat_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "pat_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ PAT secret not configured. PR creation will be skipped."
+            echo "To enable automatic PR creation for MegaLinter fixes, configure a PAT secret with repo permissions."
+          fi
+
       - name: Create Pull Request with fixes
-        if: always() # Always try to create PR even if scan has errors
+        # Only create PR if PAT is available (GITHUB_TOKEN cannot create PRs due to GitHub's security policy)
+        if: always() && steps.check-pat.outputs.pat_available == 'true'
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           commit-message: "[MegaLinter] Apply linter fixes"
           title: "[MegaLinter] 🔧 Automated linter fixes"
           body: |
