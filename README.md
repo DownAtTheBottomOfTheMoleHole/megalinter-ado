@@ -173,8 +173,12 @@ cd megalinter && npm install
 ### Build & Test
 
 ```bash
+# Build the Azure DevOps task (TypeScript → JavaScript)
 cd megalinter
 npm run build
+
+# Run the main test suite (Cucumber BDD tests + lint/coverage) from the repo root
+cd ..
 npm test
 ```
 
