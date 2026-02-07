@@ -1,6 +1,11 @@
 # Node.js dependencies
 node_modules/
 
+# Package manager lock files (keep only package-lock.json at root)
+pnpm-lock.yaml
+yarn.lock
+megalinter/package-lock.json
+
 # Azure DevOps extension package
 *.vsix
 
