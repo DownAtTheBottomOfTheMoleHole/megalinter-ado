@@ -42,7 +42,7 @@ The project uses a unified npm dependency management system:
    - Contains the same runtime dependencies as root package.json
    - No package-lock.json (only root has package-lock.json)
 
-3. **Build process**: 
+3. **Build process**:
    - Development: Run `npm install` at root to install all dependencies
    - CI/CD: Run `npm install` at root, then `npm install --production` in megalinter before packaging
    - The megalinter/package-lock.json is removed to maintain single lock file at root
