@@ -77,7 +77,6 @@ jobs:
       - name: Install NPM Packages
         if: ${{ !cancelled() }}
         run: npm install
-        working-directory: megalinter
 
       - name: Build with tsc
         if: ${{ !cancelled() }}
@@ -290,7 +289,6 @@ jobs:
 
       - name: Install NPM Packages
         run: npm install
-        working-directory: megalinter
 
       - name: Build with tsc
         run: npx tsc
