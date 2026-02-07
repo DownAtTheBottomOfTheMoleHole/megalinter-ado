@@ -224,11 +224,22 @@ async function handleFixPullRequest(
 
   // Set authenticated remote URL for push
   // First, save the original remote URL to restore it later
-  const getRemoteResult = tl.execSync("git", ["remote", "get-url", "origin"], {
-    cwd: workingDir,
-  });
-  const originalRemoteUrl =
-    getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
+  let originalRemoteUrl = "";
+  try {
+    const getRemoteResult = tl.execSync(
+      "git",
+      ["remote", "get-url", "origin"],
+      {
+        cwd: workingDir,
+      },
+    );
+    originalRemoteUrl =
+      getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
+  } catch (err) {
+    console.warn(
+      "Warning: Could not retrieve original git remote URL. Will skip restoration.",
+    );
+  }
 
   const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
   const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
@@ -245,9 +256,19 @@ async function handleFixPullRequest(
 
   // Restore the original remote URL to avoid persisting the token in .git/config
   if (originalRemoteUrl) {
-    tl.execSync("git", ["remote", "set-url", "origin", originalRemoteUrl], {
-      cwd: workingDir,
-    });
+    try {
+      tl.execSync("git", ["remote", "set-url", "origin", originalRemoteUrl], {
+        cwd: workingDir,
+      });
+      console.log("✅ Restored original git remote URL (token cleaned up)");
+    } catch (err) {
+      console.error(
+        "❌ Failed to restore original git remote URL. Token may persist in .git/config!",
+      );
+      if (err instanceof Error) {
+        console.error(`Error: ${err.message}`);
+      }
+    }
   }
 
   if (pushResult.code !== 0) {
