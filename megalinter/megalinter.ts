@@ -249,7 +249,10 @@ async function handleFixPullRequest(
     return;
   }
 
-  const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
+  const baseUrl = collectionUri.replace(
+    /^https:\/\//,
+    `https://${accessToken}@`,
+  );
   const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
   tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
     cwd: workingDir,
