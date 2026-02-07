@@ -93,21 +93,22 @@ jobs:
         run: tfx extension create --manifest-globs vss-extension.json --output-path ./private-extension.vsix
 
       - name: Publish Private Extension
+        id: publish-private
         if: ${{ !cancelled() }}
         run: |
           tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
 
       - name: Create and push version tag
-        if: success()
+        if: steps.publish-private.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # Check if tag already exists before creating
-          if ! git rev-parse "v${{ env.GitVersion_MajorMinorPatch }}" >/dev/null 2>&1; then
+          # Check if tag already exists in remote repository
+          if ! git ls-remote --tags origin "v${{ env.GitVersion_MajorMinorPatch }}" | grep -q "v${{ env.GitVersion_MajorMinorPatch }}"; then
             git tag -a "v${{ env.GitVersion_MajorMinorPatch }}" -m "Release version ${{ env.GitVersion_MajorMinorPatch }}"
             git push origin "v${{ env.GitVersion_MajorMinorPatch }}"
           else
-            echo "Tag v${{ env.GitVersion_MajorMinorPatch }} already exists, skipping tag creation"
+            echo "Tag v${{ env.GitVersion_MajorMinorPatch }} already exists in remote repository, skipping tag creation"
           fi
 
   scan:
