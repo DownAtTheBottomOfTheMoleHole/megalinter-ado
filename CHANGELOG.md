@@ -47,4 +47,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-For more details, see the [commit history](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/commits/main).
+For more details, see the [commit history](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/commits/main).

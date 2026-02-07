@@ -21,7 +21,7 @@ Thank you for your interest in contributing! We welcome all contributions.
 
 ## Reporting Issues
 
-- Use [GitHub Issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/issues) for bugs and feature requests.
+- Use [GitHub Issues](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues) for bugs and feature requests.
 
 ## Community
 

@@ -6,8 +6,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green)](https://nodejs.org/)
 
-> **Note:** This is not an official MegaLinter extension. However, it has been reviewed and approved by the [MegaLinter](https://megalinter.io) project.
-
 Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelines. Analyze 50+ languages, apply auto-fixes, and get PR comments—all with a simple task configuration.
 
 ## Installation
@@ -50,7 +48,7 @@ Configure MegaLinter using the Azure DevOps task assistant:
 | `reportsPath`      | Reports output directory                                    | `megalinter-reports` |
 | `disableLinters`   | Comma-separated linters to disable                          | -                    |
 
-See [all available inputs](docs/CONFIGURATION.md) for the complete list.
+See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 
 ## Flavors
 
@@ -154,9 +152,39 @@ SHOW_ELAPSED_TIME: true
 ## Resources
 
 - [MegaLinter Documentation](https://megalinter.io)
-- [Configuration Guide](docs/CONFIGURATION.md)
-- [Available Flavors](docs/FLAVORS.md)
+- [Configuration Guide](https://megalinter.io/latest/configuration/)
+- [Available Flavors](https://megalinter.io/latest/flavors/)
 - [GitHub Repository](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado)
+
+## Development
+
+### Prerequisites
+
+- Node.js >= 20.0.0
+- npm >= 10.0.0
+
+### Setup
+
+```bash
+npm install
+cd megalinter && npm install
+```
+
+### Build & Test
+
+```bash
+# Build the Azure DevOps task (TypeScript → JavaScript)
+cd megalinter
+npm run build
+
+# Run the main test suite (Cucumber BDD tests + lint/coverage) from the repo root
+cd ..
+npm test
+```
+
+### Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
 

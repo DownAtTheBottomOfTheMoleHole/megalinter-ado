@@ -171,6 +171,19 @@ async function handleFixPullRequest(
   const repoName = tl.getVariable("Build.Repository.Name");
   const accessToken = tl.getVariable("System.AccessToken");
 
+  // Validate required variables
+  if (!collectionUri || !project || !repoName || !accessToken) {
+    console.error(
+      "❌ Missing required Azure DevOps variables. Ensure System.AccessToken is enabled.",
+    );
+    console.error("Required variables:");
+    console.error(`  - System.CollectionUri: ${collectionUri ? "✓" : "✗"}`);
+    console.error(`  - System.TeamProject: ${project ? "✓" : "✗"}`);
+    console.error(`  - Build.Repository.Name: ${repoName ? "✓" : "✗"}`);
+    console.error(`  - System.AccessToken: ${accessToken ? "✓" : "✗"}`);
+    return;
+  }
+
   // Get branch info
   const sourceBranch = tl.getVariable("Build.SourceBranch") || "";
   const sourceBranchName = sourceBranch.replace("refs/heads/", "");
@@ -210,10 +223,25 @@ async function handleFixPullRequest(
   }
 
   // Set authenticated remote URL for push
-  const baseUrl = collectionUri!.replace(
-    /^https:\/\//,
-    `https://${accessToken}@`,
-  );
+  // First, save the original remote URL to restore it later
+  let originalRemoteUrl = "";
+  try {
+    const getRemoteResult = tl.execSync(
+      "git",
+      ["remote", "get-url", "origin"],
+      {
+        cwd: workingDir,
+      },
+    );
+    originalRemoteUrl =
+      getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
+  } catch (err) {
+    console.warn(
+      "Warning: Could not retrieve original git remote URL. Will skip restoration.",
+    );
+  }
+
+  const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
   const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
   tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
     cwd: workingDir,
@@ -225,6 +253,23 @@ async function handleFixPullRequest(
     ["push", "-u", "origin", fixBranchName],
     { cwd: workingDir },
   );
+
+  // Restore the original remote URL to avoid persisting the token in .git/config
+  if (originalRemoteUrl) {
+    try {
+      tl.execSync("git", ["remote", "set-url", "origin", originalRemoteUrl], {
+        cwd: workingDir,
+      });
+      console.log("✅ Restored original git remote URL (token cleaned up)");
+    } catch (err) {
+      console.error(
+        "❌ Failed to restore original git remote URL. Token may persist in .git/config!",
+      );
+      if (err instanceof Error) {
+        console.error(`Error: ${err.message}`);
+      }
+    }
+  }
 
   if (pushResult.code !== 0) {
     console.log(`Failed to push fix branch: ${pushResult.stderr}`);
@@ -470,5 +515,8 @@ export async function run(): Promise<void> {
   }
 }
 
-// Call the 'run' function
-run();
+// Call the 'run' function only when executed as the main module
+// This allows the module to be imported in tests without auto-executing
+if (require.main === module) {
+  run();
+}
