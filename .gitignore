@@ -29,3 +29,5 @@ Thumbs.db
 # pre-commit_logs
 .pre-commit_logs/
 megalinter-reports/
+.nyc_output/
+.taskkey
