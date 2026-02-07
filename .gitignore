@@ -34,3 +34,6 @@ Thumbs.db
 megalinter-reports/
 .nyc_output/
 .taskkey
+
+# Azure DevOps task build artifacts
+**/.taskkey
