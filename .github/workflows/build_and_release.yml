@@ -104,6 +104,8 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     continue-on-error: true
+    # Skip MegaLinter when the commit is from MegaLinter itself to prevent infinite loop
+    if: "!contains(github.event.head_commit.message, '[MegaLinter]')"
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
