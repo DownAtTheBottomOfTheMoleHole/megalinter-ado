@@ -1,60 +1,37 @@
 "use strict";
-const __createBinding =
-  (this && this.__createBinding) ||
-  (Object.create
-    ? function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        let desc = Object.getOwnPropertyDescriptor(m, k);
-        if (
-          !desc ||
-          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
-        ) {
-          desc = {
-            enumerable: true,
-            get: function () {
-              return m[k];
-            },
-          };
-        }
-        Object.defineProperty(o, k2, desc);
-      }
-    : function (o, m, k, k2) {
-        if (k2 === undefined) k2 = k;
-        o[k2] = m[k];
-      });
-const __setModuleDefault =
-  (this && this.__setModuleDefault) ||
-  (Object.create
-    ? function (o, v) {
-        Object.defineProperty(o, "default", { enumerable: true, value: v });
-      }
-    : function (o, v) {
-        o.default = v;
-      });
-const __importStar =
-  (this && this.__importStar) ||
-  (function () {
-    let ownKeys = function (o) {
-      ownKeys =
-        Object.getOwnPropertyNames ||
-        function (o) {
-          const ar = [];
-          for (const k in o)
-            if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-          return ar;
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
         };
-      return ownKeys(o);
+        return ownKeys(o);
     };
     return function (mod) {
-      if (mod && mod.__esModule) return mod;
-      const result = {};
-      if (mod != null)
-        for (let k = ownKeys(mod), i = 0; i < k.length; i++)
-          if (k[i] !== "default") __createBinding(result, mod, k[i]);
-      __setModuleDefault(result, mod);
-      return result;
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
     };
-  })();
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = run;
 // Import the Azure Pipelines Task Library
@@ -105,362 +82,320 @@ These are automated fixes. Please review carefully before merging.
 /**
  * Creates a pull request in Azure DevOps with the MegaLinter fixes
  */
-async function createFixPullRequest(
-  sourceBranch,
-  targetBranch,
-  title,
-  description,
-) {
-  const collectionUri = tl.getVariable("System.CollectionUri");
-  const project = tl.getVariable("System.TeamProject");
-  const repositoryId = tl.getVariable("Build.Repository.ID");
-  const accessToken = tl.getVariable("System.AccessToken");
-  if (!collectionUri || !project || !repositoryId || !accessToken) {
-    console.log("Missing required Azure DevOps variables for PR creation");
-    return false;
-  }
-  // Build the API URL
-  const apiUrl = `${collectionUri}${project}/_apis/git/repositories/${repositoryId}/pullrequests?api-version=7.1`;
-  const prPayload = {
-    sourceRefName: `refs/heads/${sourceBranch}`,
-    targetRefName: `refs/heads/${targetBranch}`,
-    title,
-    description,
-    isDraft: false,
-  };
-  return new Promise((resolve) => {
-    try {
-      const url = new URL(apiUrl);
-      const options = {
-        hostname: url.hostname,
-        path: url.pathname + url.search,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      };
-      const req = (url.protocol === "https:" ? https : http).request(
-        options,
-        (res) => {
-          let data = "";
-          res.on("data", (chunk) => (data += chunk));
-          res.on("end", () => {
-            if (res.statusCode === 201) {
-              const pr = JSON.parse(data);
-              console.log(`✅ Pull request created: ${pr.url}`);
-              console.log(`   PR #${pr.pullRequestId}: ${pr.title}`);
-              resolve(true);
-            } else {
-              console.log(`Failed to create PR: ${res.statusCode} - ${data}`);
-              resolve(false);
-            }
-          });
-        },
-      );
-      req.on("error", (err) => {
-        console.log(`Error creating PR: ${err.message}`);
-        resolve(false);
-      });
-      req.write(JSON.stringify(prPayload));
-      req.end();
-    } catch (err) {
-      console.log(`Exception creating PR: ${err}`);
-      resolve(false);
+async function createFixPullRequest(sourceBranch, targetBranch, title, description) {
+    const collectionUri = tl.getVariable("System.CollectionUri");
+    const project = tl.getVariable("System.TeamProject");
+    const repositoryId = tl.getVariable("Build.Repository.ID");
+    const accessToken = tl.getVariable("System.AccessToken");
+    if (!collectionUri || !project || !repositoryId || !accessToken) {
+        console.log("Missing required Azure DevOps variables for PR creation");
+        return false;
     }
-  });
+    // Build the API URL
+    const apiUrl = `${collectionUri}${project}/_apis/git/repositories/${repositoryId}/pullrequests?api-version=7.1`;
+    const prPayload = {
+        sourceRefName: `refs/heads/${sourceBranch}`,
+        targetRefName: `refs/heads/${targetBranch}`,
+        title: title,
+        description: description,
+        isDraft: false,
+    };
+    return new Promise((resolve) => {
+        try {
+            const url = new URL(apiUrl);
+            const options = {
+                hostname: url.hostname,
+                path: url.pathname + url.search,
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const req = (url.protocol === "https:" ? https : http).request(options, (res) => {
+                let data = "";
+                res.on("data", (chunk) => (data += chunk));
+                res.on("end", () => {
+                    if (res.statusCode === 201) {
+                        const pr = JSON.parse(data);
+                        console.log(`✅ Pull request created: ${pr.url}`);
+                        console.log(`   PR #${pr.pullRequestId}: ${pr.title}`);
+                        resolve(true);
+                    }
+                    else {
+                        console.log(`Failed to create PR: ${res.statusCode} - ${data}`);
+                        resolve(false);
+                    }
+                });
+            });
+            req.on("error", (err) => {
+                console.log(`Error creating PR: ${err.message}`);
+                resolve(false);
+            });
+            req.write(JSON.stringify(prPayload));
+            req.end();
+        }
+        catch (err) {
+            console.log(`Exception creating PR: ${err}`);
+            resolve(false);
+        }
+    });
 }
 /**
  * Commits and pushes MegaLinter fixes to a new branch and creates a PR
  */
 async function handleFixPullRequest(workingDir, isPullRequest) {
-  console.log("Starting handleFixPullRequest with workingDir:", workingDir);
-  const createPR = tl.getBoolInput("createFixPR");
-  console.log("createFixPR input:", createPR);
-  if (!createPR) {
-    console.log("createFixPR is false, skipping PR creation");
-    return;
-  }
-  if (isPullRequest) {
-    console.log(
-      "Pull request build detected - skipping fix PR creation as fixes are applied to the PR branch",
-    );
-    return;
-  }
-  // Check if there are any changes to commit
-  console.log("Checking for git changes in:", workingDir);
-  const statusResult = tl.execSync("git", ["status", "--porcelain"], {
-    cwd: workingDir,
-  });
-  console.log(
-    "Git status result - code:",
-    statusResult.code,
-    "stdout:",
-    statusResult.stdout,
-    "stderr:",
-    statusResult.stderr,
-  );
-  if (!statusResult.stdout || !statusResult.stdout.trim()) {
-    console.log("No fixes to commit - working directory is clean");
-    return;
-  }
-  console.log("MegaLinter fixes detected, creating pull request...");
-  // Get required variables for authentication
-  const collectionUri = tl.getVariable("System.CollectionUri");
-  const project = tl.getVariable("System.TeamProject");
-  const repoName = tl.getVariable("Build.Repository.Name");
-  const accessToken = tl.getVariable("System.AccessToken");
-  // Get branch info
-  const sourceBranch = tl.getVariable("Build.SourceBranch") || "";
-  const sourceBranchName = sourceBranch.replace("refs/heads/", "");
-  const buildId = tl.getVariable("Build.BuildId") || Date.now().toString();
-  const fixBranchName = `fix/megalinter-${buildId}`;
-  // Configure git
-  tl.execSync("git", ["config", "user.email", "megalinter@azure-pipelines"], {
-    cwd: workingDir,
-  });
-  tl.execSync("git", ["config", "user.name", "MegaLinter"], {
-    cwd: workingDir,
-  });
-  // Create and checkout fix branch
-  const checkoutResult = tl.execSync("git", ["checkout", "-b", fixBranchName], {
-    cwd: workingDir,
-  });
-  if (checkoutResult.code !== 0) {
-    console.log(`Failed to create fix branch: ${checkoutResult.stderr}`);
-    return;
-  }
-  // Stage all changes
-  tl.execSync("git", ["add", "-A"], { cwd: workingDir });
-  // Commit with conventional commit message
-  const commitMessage = "fix(lint): apply MegaLinter auto-fixes";
-  const commitResult = tl.execSync("git", ["commit", "-m", commitMessage], {
-    cwd: workingDir,
-  });
-  if (commitResult.code !== 0) {
-    console.log(`Failed to commit fixes: ${commitResult.stderr}`);
-    return;
-  }
-  // Set authenticated remote URL for push
-  const baseUrl = collectionUri.replace(
-    /^https:\/\//,
-    `https://${accessToken}@`,
-  );
-  const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
-  tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
-    cwd: workingDir,
-  });
-  // Push the branch
-  const pushResult = tl.execSync(
-    "git",
-    ["push", "-u", "origin", fixBranchName],
-    { cwd: workingDir },
-  );
-  if (pushResult.code !== 0) {
-    console.log(`Failed to push fix branch: ${pushResult.stderr}`);
-    return;
-  }
-  console.log(`✅ Pushed fixes to branch: ${fixBranchName}`);
-  // Create the pull request
-  const prTitle = "fix(lint): apply MegaLinter auto-fixes"; // 41 chars, under 72
-  // Replace variables in description
-  let prDescription = PR_DESCRIPTION_TEMPLATE.replace(
-    /\$\(Build\.BuildId\)/g,
-    buildId,
-  )
-    .replace(
-      /\$\(System\.CollectionUri\)/g,
-      tl.getVariable("System.CollectionUri") || "",
-    )
-    .replace(
-      /\$\(System\.TeamProject\)/g,
-      tl.getVariable("System.TeamProject") || "",
-    )
-    .replace(/\$\(Build\.SourceBranch\)/g, sourceBranch);
-  // Ensure description is under 4000 characters
-  if (prDescription.length > 4000) {
-    prDescription = prDescription.substring(0, 3997) + "...";
-  }
-  await createFixPullRequest(
-    fixBranchName,
-    sourceBranchName,
-    prTitle,
-    prDescription,
-  );
-  console.log(
-    `Attempted to create PR from '${fixBranchName}' to '${sourceBranchName}'`,
-  );
+    console.log("Starting handleFixPullRequest with workingDir:", workingDir);
+    const createPR = tl.getBoolInput("createFixPR");
+    console.log("createFixPR input:", createPR);
+    if (!createPR) {
+        console.log("createFixPR is false, skipping PR creation");
+        return;
+    }
+    if (isPullRequest) {
+        console.log("Pull request build detected - skipping fix PR creation as fixes are applied to the PR branch");
+        return;
+    }
+    // Check if there are any changes to commit
+    console.log("Checking for git changes in:", workingDir);
+    const statusResult = tl.execSync("git", ["status", "--porcelain"], {
+        cwd: workingDir,
+    });
+    console.log("Git status result - code:", statusResult.code, "stdout:", statusResult.stdout, "stderr:", statusResult.stderr);
+    if (!statusResult.stdout || !statusResult.stdout.trim()) {
+        console.log("No fixes to commit - working directory is clean");
+        return;
+    }
+    console.log("MegaLinter fixes detected, creating pull request...");
+    // Get required variables for authentication
+    const collectionUri = tl.getVariable("System.CollectionUri");
+    const project = tl.getVariable("System.TeamProject");
+    const repoName = tl.getVariable("Build.Repository.Name");
+    const accessToken = tl.getVariable("System.AccessToken");
+    // Get branch info
+    const sourceBranch = tl.getVariable("Build.SourceBranch") || "";
+    const sourceBranchName = sourceBranch.replace("refs/heads/", "");
+    const buildId = tl.getVariable("Build.BuildId") || Date.now().toString();
+    const fixBranchName = `fix/megalinter-${buildId}`;
+    // Configure git
+    tl.execSync("git", ["config", "user.email", "megalinter@azure-pipelines"], {
+        cwd: workingDir,
+    });
+    tl.execSync("git", ["config", "user.name", "MegaLinter"], {
+        cwd: workingDir,
+    });
+    // Create and checkout fix branch
+    const checkoutResult = tl.execSync("git", ["checkout", "-b", fixBranchName], {
+        cwd: workingDir,
+    });
+    if (checkoutResult.code !== 0) {
+        console.log(`Failed to create fix branch: ${checkoutResult.stderr}`);
+        return;
+    }
+    // Stage all changes
+    tl.execSync("git", ["add", "-A"], { cwd: workingDir });
+    // Commit with conventional commit message
+    const commitMessage = "fix(lint): apply MegaLinter auto-fixes";
+    const commitResult = tl.execSync("git", ["commit", "-m", commitMessage], {
+        cwd: workingDir,
+    });
+    if (commitResult.code !== 0) {
+        console.log(`Failed to commit fixes: ${commitResult.stderr}`);
+        return;
+    }
+    // Set authenticated remote URL for push
+    const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
+    const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
+    tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
+        cwd: workingDir,
+    });
+    // Push the branch
+    const pushResult = tl.execSync("git", ["push", "-u", "origin", fixBranchName], { cwd: workingDir });
+    if (pushResult.code !== 0) {
+        console.log(`Failed to push fix branch: ${pushResult.stderr}`);
+        return;
+    }
+    console.log(`✅ Pushed fixes to branch: ${fixBranchName}`);
+    // Create the pull request
+    const prTitle = "fix(lint): apply MegaLinter auto-fixes"; // 41 chars, under 72
+    // Replace variables in description
+    let prDescription = PR_DESCRIPTION_TEMPLATE.replace(/\$\(Build\.BuildId\)/g, buildId)
+        .replace(/\$\(System\.CollectionUri\)/g, tl.getVariable("System.CollectionUri") || "")
+        .replace(/\$\(System\.TeamProject\)/g, tl.getVariable("System.TeamProject") || "")
+        .replace(/\$\(Build\.SourceBranch\)/g, sourceBranch);
+    // Ensure description is under 4000 characters
+    if (prDescription.length > 4000) {
+        prDescription = prDescription.substring(0, 3997) + "...";
+    }
+    await createFixPullRequest(fixBranchName, sourceBranchName, prTitle, prDescription);
+    console.log(`Attempted to create PR from '${fixBranchName}' to '${sourceBranchName}'`);
 }
 // Define an asynchronous function named 'run' with a return type of Promise<void>
 async function run() {
-  try {
-    // Get key configuration inputs first
-    const flavor = tl.getInput("flavor") || "all";
-    const release = tl.getInput("release") || "latest";
-    const runnerVersion = tl.getInput("runnerVersion") || "latest";
-    const customImage = tl.getInput("image");
-    const workingDir =
-      tl.getVariable("Build.SourcesDirectory") ||
-      tl.getInput("path") ||
-      tl.getVariable("Pipeline.Workspace") ||
-      ".";
-    // Check if this is a pull request build
-    const buildReason = tl.getVariable("Build.Reason");
-    const isPullRequest = buildReason === "PullRequest";
-    // Get PR comment reporter setting (defaults to true for PR builds)
-    const enablePRComments = tl.getBoolInput("enablePRComments");
-    const shouldEnablePRComments = enablePRComments || isPullRequest;
-    if (isPullRequest) {
-      console.log("Pull Request build detected - PR comments will be enabled");
+    try {
+        // Get key configuration inputs first
+        const flavor = tl.getInput("flavor") || "all";
+        const release = tl.getInput("release") || "latest";
+        const runnerVersion = tl.getInput("runnerVersion") || "latest";
+        const customImage = tl.getInput("image");
+        const workingDir = tl.getVariable("Build.SourcesDirectory") ||
+            tl.getInput("path") ||
+            tl.getVariable("Pipeline.Workspace") ||
+            ".";
+        // Check if this is a pull request build
+        const buildReason = tl.getVariable("Build.Reason");
+        const isPullRequest = buildReason === "PullRequest";
+        // Get PR comment reporter setting (defaults to true for PR builds)
+        const enablePRComments = tl.getBoolInput("enablePRComments");
+        const shouldEnablePRComments = enablePRComments || isPullRequest;
+        if (isPullRequest) {
+            console.log("Pull Request build detected - PR comments will be enabled");
+        }
+        // Determine the full Docker image name with tag
+        let dockerImageName;
+        if (customImage) {
+            // User provided a custom image override
+            dockerImageName = customImage;
+        }
+        else {
+            // Build image name from flavor and release
+            dockerImageName = "oxsecurity/megalinter";
+            if (flavor && flavor !== "all") {
+                dockerImageName += `-${flavor}`;
+            }
+            dockerImageName += `:${release}`;
+        }
+        console.log(`Using Docker image: ${dockerImageName}`);
+        // Define string input parameters that map to mega-linter-runner CLI args
+        // Note: input names must match task.json exactly (camelCase)
+        const stringInputMappings = [
+            { input: "path", cliArg: "--path" },
+            { input: "flavor", cliArg: "--flavor" },
+            { input: "image", cliArg: "--image" },
+            { input: "env", cliArg: "--env" },
+            { input: "release", cliArg: "--release" },
+            { input: "containerName", cliArg: "--container-name" },
+        ];
+        // Define boolean input parameters
+        // Note: input names must match task.json exactly (camelCase)
+        const boolInputMappings = [
+            { input: "fix", cliArg: "--fix" },
+            { input: "help", cliArg: "--help" },
+            { input: "install", cliArg: "--install" },
+            { input: "removeContainer", cliArg: "--remove-container" },
+        ];
+        // Build arguments array for mega-linter-runner
+        const args = [];
+        // Add string inputs
+        stringInputMappings.forEach(({ input, cliArg }) => {
+            const value = tl.getInput(input);
+            if (value) {
+                args.push(cliArg, value);
+            }
+        });
+        // Add boolean inputs
+        boolInputMappings.forEach(({ input, cliArg }) => {
+            if (tl.getBoolInput(input)) {
+                args.push(cliArg);
+            }
+        });
+        // Check if the Docker image is already available in the local Docker cache
+        // This helps with caching when using self-hosted agents or Docker layer caching
+        const dockerImageCheck = tl.execSync("docker", [
+            "images",
+            "-q",
+            dockerImageName,
+        ]);
+        if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
+            console.log(`Docker image '${dockerImageName}' found in cache. Skipping pull.`);
+        }
+        else {
+            console.log(`Pulling Docker image: ${dockerImageName}`);
+            // Use async exec for streaming output during docker pull
+            const dockerTool = tl.tool("docker");
+            dockerTool.arg(["pull", dockerImageName]);
+            const dockerPullCode = await dockerTool.exec({
+                failOnStdErr: false,
+                silent: false,
+            });
+            if (dockerPullCode !== 0) {
+                tl.setResult(tl.TaskResult.Failed, `Failed to pull Docker image: ${dockerImageName}`);
+                return;
+            }
+            console.log("Docker image pulled successfully.");
+        }
+        // Execute mega-linter-runner via npx with streaming output
+        const npxPackage = runnerVersion === "latest"
+            ? "mega-linter-runner"
+            : `mega-linter-runner@${runnerVersion}`;
+        console.log(`Running: npx ${npxPackage} ${args.join(" ")}`);
+        // Build environment variables for the mega-linter-runner process
+        const execEnv = { ...process.env };
+        // Enable Azure DevOps PR comment reporter when in PR context
+        if (shouldEnablePRComments) {
+            console.log("Enabling Azure DevOps PR comment reporter");
+            execEnv["AZURE_COMMENT_REPORTER"] = "true";
+            execEnv["SYSTEM_ACCESSTOKEN"] =
+                tl.getVariable("System.AccessToken") || "";
+            execEnv["SYSTEM_COLLECTIONURI"] =
+                tl.getVariable("System.CollectionUri") || "";
+            execEnv["SYSTEM_TEAMPROJECT"] =
+                tl.getVariable("System.TeamProject") || "";
+            execEnv["BUILD_BUILD_ID"] = tl.getVariable("Build.BuildId") || "";
+            execEnv["BUILD_REPOSITORY_ID"] =
+                tl.getVariable("Build.Repository.ID") || "";
+        }
+        // Set additional MegaLinter configuration from inputs
+        const configFile = tl.getInput("configFile");
+        if (configFile) {
+            execEnv["MEGALINTER_CONFIG"] = configFile;
+        }
+        const reportsPath = tl.getInput("reportsPath");
+        if (reportsPath) {
+            execEnv["MEGALINTER_REPORTS_PATH"] = reportsPath;
+            console.log(`MegaLinter reports will be saved to: ${reportsPath}`);
+        }
+        const disableLinters = tl.getInput("disableLinters");
+        if (disableLinters) {
+            execEnv["DISABLE_LINTERS"] = disableLinters;
+        }
+        // Use async exec for real-time streaming output
+        const npxTool = tl.tool("npx");
+        npxTool.arg([npxPackage, ...args]);
+        const resultCode = await npxTool.exec({
+            failOnStdErr: false,
+            silent: false,
+            ignoreReturnCode: true,
+            env: execEnv,
+        });
+        console.log(`MegaLinter execution completed with exit code: ${resultCode}`);
+        // Publish reports as artifact if path is set
+        if (reportsPath) {
+            console.log(`##vso[artifact.upload artifactname=MegaLinterReports;]${reportsPath}`);
+        }
+        // Handle fix PR creation if fixes were applied
+        const fixEnabled = tl.getBoolInput("fix");
+        if (fixEnabled) {
+            await handleFixPullRequest(workingDir, isPullRequest);
+        }
+        if (resultCode !== 0) {
+            tl.setResult(tl.TaskResult.Failed, "MegaLinter execution failed with exit code " + resultCode);
+        }
+        else {
+            tl.setResult(tl.TaskResult.Succeeded, "MegaLinter completed successfully");
+        }
     }
-    // Determine the full Docker image name with tag
-    let dockerImageName;
-    if (customImage) {
-      // User provided a custom image override
-      dockerImageName = customImage;
-    } else {
-      // Build image name from flavor and release
-      dockerImageName = "oxsecurity/megalinter";
-      if (flavor && flavor !== "all") {
-        dockerImageName += `-${flavor}`;
-      }
-      dockerImageName += `:${release}`;
+    catch (err) {
+        if (err instanceof Error) {
+            tl.setResult(tl.TaskResult.Failed, err.message);
+        }
+        else {
+            tl.setResult(tl.TaskResult.Failed, "An unknown error occurred");
+        }
     }
-    console.log(`Using Docker image: ${dockerImageName}`);
-    // Define string input parameters that map to mega-linter-runner CLI args
-    // Note: input names must match task.json exactly (camelCase)
-    const stringInputMappings = [
-      { input: "path", cliArg: "--path" },
-      { input: "flavor", cliArg: "--flavor" },
-      { input: "image", cliArg: "--image" },
-      { input: "env", cliArg: "--env" },
-      { input: "release", cliArg: "--release" },
-      { input: "containerName", cliArg: "--container-name" },
-    ];
-    // Define boolean input parameters
-    // Note: input names must match task.json exactly (camelCase)
-    const boolInputMappings = [
-      { input: "fix", cliArg: "--fix" },
-      { input: "help", cliArg: "--help" },
-      { input: "install", cliArg: "--install" },
-      { input: "removeContainer", cliArg: "--remove-container" },
-    ];
-    // Build arguments array for mega-linter-runner
-    const args = [];
-    // Add string inputs
-    stringInputMappings.forEach(({ input, cliArg }) => {
-      const value = tl.getInput(input);
-      if (value) {
-        args.push(cliArg, value);
-      }
-    });
-    // Add boolean inputs
-    boolInputMappings.forEach(({ input, cliArg }) => {
-      if (tl.getBoolInput(input)) {
-        args.push(cliArg);
-      }
-    });
-    // Check if the Docker image is already available in the local Docker cache
-    // This helps with caching when using self-hosted agents or Docker layer caching
-    const dockerImageCheck = tl.execSync("docker", [
-      "images",
-      "-q",
-      dockerImageName,
-    ]);
-    if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
-      console.log(
-        `Docker image '${dockerImageName}' found in cache. Skipping pull.`,
-      );
-    } else {
-      console.log(`Pulling Docker image: ${dockerImageName}`);
-      // Use async exec for streaming output during docker pull
-      const dockerTool = tl.tool("docker");
-      dockerTool.arg(["pull", dockerImageName]);
-      const dockerPullCode = await dockerTool.exec({
-        failOnStdErr: false,
-        silent: false,
-      });
-      if (dockerPullCode !== 0) {
-        tl.setResult(
-          tl.TaskResult.Failed,
-          `Failed to pull Docker image: ${dockerImageName}`,
-        );
-        return;
-      }
-      console.log("Docker image pulled successfully.");
-    }
-    // Execute mega-linter-runner via npx with streaming output
-    const npxPackage =
-      runnerVersion === "latest"
-        ? "mega-linter-runner"
-        : `mega-linter-runner@${runnerVersion}`;
-    console.log(`Running: npx ${npxPackage} ${args.join(" ")}`);
-    // Build environment variables for the mega-linter-runner process
-    const execEnv = { ...process.env };
-    // Enable Azure DevOps PR comment reporter when in PR context
-    if (shouldEnablePRComments) {
-      console.log("Enabling Azure DevOps PR comment reporter");
-      execEnv.AZURE_COMMENT_REPORTER = "true";
-      execEnv.SYSTEM_ACCESSTOKEN = tl.getVariable("System.AccessToken") || "";
-      execEnv.SYSTEM_COLLECTIONURI =
-        tl.getVariable("System.CollectionUri") || "";
-      execEnv.SYSTEM_TEAMPROJECT = tl.getVariable("System.TeamProject") || "";
-      execEnv.BUILD_BUILD_ID = tl.getVariable("Build.BuildId") || "";
-      execEnv.BUILD_REPOSITORY_ID = tl.getVariable("Build.Repository.ID") || "";
-    }
-    // Set additional MegaLinter configuration from inputs
-    const configFile = tl.getInput("configFile");
-    if (configFile) {
-      execEnv.MEGALINTER_CONFIG = configFile;
-    }
-    const reportsPath = tl.getInput("reportsPath");
-    if (reportsPath) {
-      execEnv.MEGALINTER_REPORTS_PATH = reportsPath;
-      console.log(`MegaLinter reports will be saved to: ${reportsPath}`);
-    }
-    const disableLinters = tl.getInput("disableLinters");
-    if (disableLinters) {
-      execEnv.DISABLE_LINTERS = disableLinters;
-    }
-    // Use async exec for real-time streaming output
-    const npxTool = tl.tool("npx");
-    npxTool.arg([npxPackage, ...args]);
-    const resultCode = await npxTool.exec({
-      failOnStdErr: false,
-      silent: false,
-      ignoreReturnCode: true,
-      env: execEnv,
-    });
-    console.log(`MegaLinter execution completed with exit code: ${resultCode}`);
-    // Publish reports as artifact if path is set
-    if (reportsPath) {
-      console.log(
-        `##vso[artifact.upload artifactname=MegaLinterReports;]${reportsPath}`,
-      );
-    }
-    // Handle fix PR creation if fixes were applied
-    const fixEnabled = tl.getBoolInput("fix");
-    if (fixEnabled) {
-      await handleFixPullRequest(workingDir, isPullRequest);
-    }
-    if (resultCode !== 0) {
-      tl.setResult(
-        tl.TaskResult.Failed,
-        "MegaLinter execution failed with exit code " + resultCode,
-      );
-    } else {
-      tl.setResult(
-        tl.TaskResult.Succeeded,
-        "MegaLinter completed successfully",
-      );
-    }
-  } catch (err) {
-    if (err instanceof Error) {
-      tl.setResult(tl.TaskResult.Failed, err.message);
-    } else {
-      tl.setResult(tl.TaskResult.Failed, "An unknown error occurred");
-    }
-  }
 }
-// Call the 'run' function
-run();
+// Call the 'run' function only when executed as the main module
+// This allows the module to be imported in tests without auto-executing
+if (require.main === module) {
+    run();
+}

@@ -470,5 +470,8 @@ export async function run(): Promise<void> {
   }
 }
 
-// Call the 'run' function
-run();
+// Call the 'run' function only when executed as the main module
+// This allows the module to be imported in tests without auto-executing
+if (require.main === module) {
+  run();
+}
