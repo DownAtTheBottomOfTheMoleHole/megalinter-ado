@@ -8,12 +8,28 @@ ENABLE_LINTERS: # If ENABLE_LINTERS is set, only listed linters will be processe
   - "ANSIBLE_ANSIBLE_LINT"
   - "KUBERNETES_KUBESCAPE"
   - "REPOSITORY_CHECKOV"
+  # REPOSITORY_DEVSKIM disabled due to system error: System.Diagnostics.DiagnosticSource assembly not found
+  # - "REPOSITORY_DEVSKIM"
   - "REPOSITORY_DUSTILOCK"
   - "REPOSITORY_GITLEAKS"
+  - "REPOSITORY_GRYPE"
+  - "REPOSITORY_KICS"
+  - "REPOSITORY_KINGFISHER"
+  - "REPOSITORY_SECRETLINT"
   - "REPOSITORY_SEMGREP"
+  - "REPOSITORY_SYFT"
   - "REPOSITORY_TRIVY"
+  - "REPOSITORY_TRIVY_SBOM"
+  - "REPOSITORY_TRUFFLEHOG"
   - "TERRAFORM_TERRASCAN"
   - "TERRAFORM_TFLINT"
+EXCLUDED_DIRECTORIES: # Directories to exclude from all linters
+  - node_modules
+  - .git
+  - dist
+  - megalinter-reports
+FILTER_REGEX_EXCLUDE: '(node_modules/|\.git/|dist/|megalinter-reports/)' # Exclude directories from all linters
+IGNORE_GITIGNORED_FILES: true # Honor .gitignore for file exclusions
 FAIL_IF_MISSING_LINTER_IN_FLAVOR: false # If set to true, MegaLinter fails if a linter is missing in the selected flavour
 FAIL_IF_UPDATED_SOURCES: false # If set to true, MegaLinter fails if a linter or formatter has auto-fixed sources, even if there are no errors
 FILEIO_REPORTER: false #if set to true this will generate a hyperlink to a report on file.io DO NOT ENABLE
@@ -36,6 +52,18 @@ REPOSITORY_KICS_CONFIG_FILE: LINTER_DEFAULT #kics configuration file nameUse LIN
 REPOSITORY_KICS_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
 REPOSITORY_KICS_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_KICS_RULES_PATH: .config #Path where to find linter configuration file DEFAULT: Workspace folder, then MegaLinter default rules
+REPOSITORY_KINGFISHER_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_KINGFISHER_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_SECRETLINT_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_SECRETLINT_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_GRYPE_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_GRYPE_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_SYFT_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_SYFT_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_TRIVY_SBOM_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_TRIVY_SBOM_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_TRUFFLEHOG_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
+REPOSITORY_TRUFFLEHOG_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_SEMGREP_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
 REPOSITORY_SEMGREP_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_SEMGREP_RULESETS: auto # List of semgrep rulesets identifiers that you want to enforce DEFAULT: auto
