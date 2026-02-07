@@ -163,6 +163,7 @@ jobs:
 
       - name: Check if PAT is available
         id: check-pat
+        if: always()
         run: |
           if [ -n "${{ secrets.PAT }}" ]; then
             echo "pat_available=true" >> $GITHUB_OUTPUT
