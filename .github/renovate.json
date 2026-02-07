@@ -1,52 +1,173 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "addLabels": ["renovate", "bot"],
-  "autoApprove": true,
-  "automerge": true,
-  "azure-pipelines": {
-    "enabled": true,
-    "managerFilePatterns": ["/\\.ya?ml$/"]
-  },
-  "description": "standard DBMH config",
-  "extends": ["config:best-practices"],
+  "description": "Renovate config for megalinter-ado Azure DevOps extension",
+  "extends": [
+    "config:best-practices",
+    "group:allNonMajor"
+  ],
+  "addLabels": [
+    "renovate",
+    "bot",
+    "dependencies"
+  ],
   "gitAuthor": "DBMH Renovate <renovate@dbmh.com>",
+  "timezone": "GB",
+  "schedule": [
+    "after 9am and before 5pm every weekday"
+  ],
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "prCreation": "immediate",
+  "pruneBranchAfterAutomerge": true,
+  "automerge": true,
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+  "ignoreDeprecated": true,
+  "ignoreUnstable": true,
+  "updatePinnedDependencies": true,
+  "useBaseBranchConfig": "merge",
+  "unicodeEmoji": true,
   "hostRules": [
     {
       "hostType": "github",
       "matchHost": "github.com",
-      "repository": "https://github.com/*",
       "token": "${PAT}"
     }
   ],
-  "ignoreDeprecated": true,
-  "ignoreUnstable": true,
   "packageRules": [
     {
       "description": "Dont update Azure Pipelines tasks, it breaks things",
       "enabled": false,
       "extractVersion": "^(?<version>\\d+)",
-      "matchDatasources": ["azure-pipelines-tasks"]
+      "matchDatasources": [
+        "azure-pipelines-tasks"
+      ]
     },
     {
-      "major": {
-        "automerge": false
-      }
+      "description": "Require manual merge for all major updates",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "Semver Major"
+      ]
     },
     {
-      "matchDatasources": ["github-tags", "github-releases"],
+      "description": "Auto-label minor updates",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "addLabels": [
+        "Semver Minor"
+      ]
+    },
+    {
+      "description": "Auto-label patch updates",
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "addLabels": [
+        "Semver Patch"
+      ]
+    },
+    {
+      "description": "Pin digests for GitHub Actions for supply-chain security",
+      "matchDatasources": [
+        "github-tags",
+        "github-releases"
+      ],
+      "matchPackageNames": [
+        "/^actions//"
+      ],
       "pinDigests": true,
-      "matchPackageNames": ["/^actions//"]
+      "addLabels": [
+        "GitHub Actions"
+      ]
+    },
+    {
+      "description": "Group GitHub Actions updates together",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "addLabels": [
+        "GitHub Actions"
+      ]
+    },
+    {
+      "description": "Group pre-commit hook updates together",
+      "matchManagers": [
+        "pre-commit"
+      ],
+      "groupName": "pre-commit hooks",
+      "addLabels": [
+        "linting"
+      ]
+    },
+    {
+      "description": "Group MegaLinter-related updates (runner, pre-commit hook, Docker image)",
+      "matchPackageNames": [
+        "mega-linter-runner",
+        "oxsecurity/megalinter",
+        "oxsecurity/megalinter-security"
+      ],
+      "groupName": "MegaLinter",
+      "addLabels": [
+        "MegaLinter"
+      ]
+    },
+    {
+      "description": "Group Azure Pipelines task library updates",
+      "matchPackageNames": [
+        "azure-pipelines-task-lib"
+      ],
+      "groupName": "Azure Pipelines Task Lib",
+      "addLabels": [
+        "Azure Pipelines"
+      ]
+    },
+    {
+      "description": "Group TypeScript tooling updates",
+      "matchPackageNames": [
+        "typescript",
+        "typescript-eslint",
+        "@types/node",
+        "@types/mocha",
+        "@types/q"
+      ],
+      "groupName": "TypeScript tooling"
+    },
+    {
+      "description": "Group testing framework updates",
+      "matchPackageNames": [
+        "@cucumber/cucumber",
+        "nyc",
+        "sync-request",
+        "ts-node"
+      ],
+      "groupName": "testing frameworks"
+    },
+    {
+      "description": "Group linting and formatting tool updates",
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/js",
+        "prettier"
+      ],
+      "groupName": "linters and formatters",
+      "addLabels": [
+        "linting"
+      ]
+    },
+    {
+      "description": "Label security scanner updates",
+      "matchPackageNames": [
+        "Yelp/detect-secrets"
+      ],
+      "addLabels": [
+        "security"
+      ]
     }
-  ],
-  "prConcurrentLimit": 0,
-  "prCreation": "immediate",
-  "prHourlyLimit": 0,
-  "pruneBranchAfterAutomerge": true,
-  "schedule": ["at any time"],
-  "separateMajorMinor": true,
-  "separateMultipleMajor": true,
-  "timezone": "GB",
-  "unicodeEmoji": true,
-  "updatePinnedDependencies": true,
-  "useBaseBranchConfig": "merge"
+  ]
 }
