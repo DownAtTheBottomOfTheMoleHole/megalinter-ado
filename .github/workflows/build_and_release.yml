@@ -137,7 +137,7 @@ jobs:
         run: |
           git config --global user.email 'megalinter@megalinter.io'
           git config --global user.name 'Megalinter runner'
-          npx mega-linter-runner -r v9 --fix --flavor security --env "MEGALINTER_CONFIG='.config/.mega-linter.yml'"
+          npx mega-linter-runner -r v9 --fix --flavor security
         env:
           AZURE_COMMENT_REPORTER: true
           CI: true
@@ -148,7 +148,6 @@ jobs:
           SYSTEM_TEAMPROJECT: ${{ github.repository }}
           BUILD_BUILD_ID: ${{ github.run_id }}
           BUILD_REPOSITORY_ID: ${{ github.repository }}
-          MEGALINTER_CONFIG: ".config/.mega-linter.yml"
           VALIDATE_ALL_CODEBASE: false
         working-directory: ${{ github.workspace }}
 
