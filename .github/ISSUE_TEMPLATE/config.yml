@@ -1,9 +1,9 @@
 blank_issues_enabled: false
 contact_links:
-  - name: megalinter_ado_extension Bug Reports and Feature Requests
-    url: https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/issues/new/choose
+  - name: megalinter-ado Bug Reports and Feature Requests
+    url: https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/issues/new/choose
     about: Down At The Bottom Of The Mole Hole - Unofficial Megalinter Azure DevOps Extension, (An Unofficial Azure DevOps Extension for the Megalinter Code Quality and Security Linter)
 
-  - name: megalinter_ado_extension Roadmap
-    url: https://github.com/DownAtTheBottomOfTheMoleHole/megalinter_ado_extension/blob/main/README.md
+  - name: megalinter-ado Roadmap
+    url: https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado/blob/main/README.md
     about: View the Roadmap for the upcoming work planned.
