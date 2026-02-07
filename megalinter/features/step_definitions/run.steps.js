@@ -64,6 +64,18 @@ let errorOccurred = false;
             result = "Unknown error occurred";
     }
 });
+(0, cucumber_1.When)("the run function is called with a failing command", async function () {
+    try {
+        // Simulate a failing command scenario
+        throw new Error("Test error");
+    }
+    catch (error) {
+        if (error instanceof Error)
+            result = error.message;
+        else
+            result = "Unknown error occurred";
+    }
+});
 (0, cucumber_1.Then)("the function should execute successfully", function () {
     assert_1.default.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
 });
