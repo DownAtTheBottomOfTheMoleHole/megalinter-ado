@@ -3,6 +3,9 @@
 **/.hg
 **/node_modules
 
+# Task.json contains token placeholders that shouldn't be formatted
+megalinter/task.json
+
 TERRAFORM.md
 TERRAFORM_REMOTE.md
 TERRAFORM_LOCAL.md
