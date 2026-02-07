@@ -107,6 +107,7 @@ jobs:
           if [ -z "$(git ls-remote --tags origin "v${{ env.GitVersion_MajorMinorPatch }}")" ]; then
             git tag -a "v${{ env.GitVersion_MajorMinorPatch }}" -m "Release version ${{ env.GitVersion_MajorMinorPatch }}"
             git push origin "v${{ env.GitVersion_MajorMinorPatch }}"
+            echo "Successfully created and pushed tag v${{ env.GitVersion_MajorMinorPatch }}"
           else
             echo "Tag v${{ env.GitVersion_MajorMinorPatch }} already exists in remote repository, skipping tag creation"
           fi
