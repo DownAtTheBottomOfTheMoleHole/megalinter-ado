@@ -83,6 +83,14 @@ jobs:
         run: npx tsc
         working-directory: megalinter
 
+      - name: Install task dependencies
+        if: ${{ !cancelled() }}
+        run: |
+          cd megalinter
+          npm install --production
+          rm -f package-lock.json
+        shell: bash
+
       - name: Install tfx-cli
         if: ${{ !cancelled() }}
         run: npm install -g tfx-cli
@@ -293,6 +301,13 @@ jobs:
       - name: Build with tsc
         run: npx tsc
         working-directory: megalinter
+
+      - name: Install task dependencies
+        run: |
+          cd megalinter
+          npm install --production
+          rm -f package-lock.json
+        shell: bash
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
