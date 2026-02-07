@@ -48,7 +48,7 @@ REPOSITORY_DEVSKIM_DISABLE_ERRORS: false #Run linter but consider errors as warn
 REPOSITORY_DEVSKIM_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_DUSTILOCK_DISABLE_ERRORS: false #Run linter but consider errors as warnings	false
 REPOSITORY_DUSTILOCK_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
-REPOSITORY_GITLEAKS_DISABLE_ERRORS: true #Run linter but consider errors as warnings - SARIF write errors are not actual security issues
+REPOSITORY_GITLEAKS_DISABLE_ERRORS: false #Run linter and fail on detected secret leaks; handle SARIF/report issues via report-path configuration
 REPOSITORY_GITLEAKS_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_KICS_CONFIG_FILE: LINTER_DEFAULT #kics configuration file nameUse LINTER_DEFAULT to let the linter find it DEFAULT: kics.config
 REPOSITORY_KICS_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
