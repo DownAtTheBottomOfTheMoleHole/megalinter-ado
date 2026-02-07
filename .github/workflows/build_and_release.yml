@@ -86,9 +86,9 @@ jobs:
       - name: Install task dependencies
         if: ${{ !cancelled() }}
         run: |
-          cd megalinter
           npm install --production
           rm -f package-lock.json
+        working-directory: megalinter
         shell: bash
 
       - name: Install tfx-cli
@@ -304,9 +304,9 @@ jobs:
 
       - name: Install task dependencies
         run: |
-          cd megalinter
           npm install --production
           rm -f package-lock.json
+        working-directory: megalinter
         shell: bash
 
       - name: Install tfx-cli
