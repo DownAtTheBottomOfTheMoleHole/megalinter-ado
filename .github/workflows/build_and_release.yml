@@ -77,12 +77,19 @@ jobs:
       - name: Install NPM Packages
         if: ${{ !cancelled() }}
         run: npm install
-        working-directory: megalinter
 
       - name: Build with tsc
         if: ${{ !cancelled() }}
         run: npx tsc
         working-directory: megalinter
+
+      - name: Install task dependencies
+        if: ${{ !cancelled() }}
+        run: |
+          npm install --production
+          rm -f package-lock.json
+        working-directory: megalinter
+        shell: bash
 
       - name: Install tfx-cli
         if: ${{ !cancelled() }}
@@ -290,11 +297,17 @@ jobs:
 
       - name: Install NPM Packages
         run: npm install
-        working-directory: megalinter
 
       - name: Build with tsc
         run: npx tsc
         working-directory: megalinter
+
+      - name: Install task dependencies
+        run: |
+          npm install --production
+          rm -f package-lock.json
+        working-directory: megalinter
+        shell: bash
 
       - name: Install tfx-cli
         run: npm install -g tfx-cli
