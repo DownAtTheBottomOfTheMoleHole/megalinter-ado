@@ -1,5 +1,8 @@
 changelog:
   categories:
+    - title: "💥 Breaking Changes"
+      labels:
+        - breaking-change
     - title: "🚀 Features"
       labels:
         - enhancement
@@ -7,9 +10,17 @@ changelog:
     - title: "🐛 Bug Fixes"
       labels:
         - bug
+    - title: "🔒 Security"
+      labels:
+        - security
     - title: "📝 Documentation"
       labels:
         - documentation
+    - title: "📦 Dependencies"
+      labels:
+        - dependencies
+        - renovate
+        - bot
     - title: "🧰 Maintenance"
       labels:
         - chore
