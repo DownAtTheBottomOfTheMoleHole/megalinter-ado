@@ -57,6 +57,10 @@
   "manifestVersion": 1,
   "name": "#{public_extensionName}#",
   "publisher": "#{publisherId}#",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado"
+  },
   "tags": ["sast", "linter", "code-quality", "megalinter", "devops", "ci-cd"],
   "targets": [
     {

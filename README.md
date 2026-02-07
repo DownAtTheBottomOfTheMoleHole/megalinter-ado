@@ -6,6 +6,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green)](https://nodejs.org/)
 
+> **Note:** This is not an official MegaLinter extension. However, it has been reviewed and approved by the [MegaLinter](https://megalinter.io) project.
+
 Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelines. Analyze 50+ languages, apply auto-fixes, and get PR comments—all with a simple task configuration.
 
 ## Installation
@@ -177,9 +179,10 @@ cd megalinter && npm install
 cd megalinter
 npm run build
 
-# Run the main test suite (Cucumber BDD tests + lint/coverage) from the repo root
+# Run the Cucumber BDD tests and linting from the repo root
 cd ..
-npm test
+npx cucumber-js
+npm run lint
 ```
 
 ### Contributing

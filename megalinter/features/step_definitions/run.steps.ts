@@ -3,9 +3,6 @@ import assert from "assert";
 import * as tl from "azure-pipelines-task-lib/task";
 import { run } from "../../megalinter"; // Ensure this path is correct
 
-// Define a type for test errors
-type TestError = Error;
-
 let result: string | null = null;
 let errorOccurred: boolean = false;
 
@@ -21,7 +18,7 @@ Given("the input parameters are invalid", async function () {
 
 When("the run function is called", async function () {
   try {
-    if (errorOccurred) throw new Error("Test error") as TestError;
+    if (errorOccurred) throw new Error("Test error");
     await run();
     result = "success";
   } catch (error) {
@@ -33,7 +30,7 @@ When("the run function is called", async function () {
 When("the run function is called with a failing command", async function () {
   try {
     // Simulate a failing command scenario
-    throw new Error("Test error") as TestError;
+    throw new Error("Test error");
   } catch (error) {
     if (error instanceof Error) result = error.message;
     else result = "Unknown error occurred";

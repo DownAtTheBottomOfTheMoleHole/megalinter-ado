@@ -223,8 +223,13 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         originalRemoteUrl =
             getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
     }
-    catch (err) {
-        console.warn("Warning: Could not retrieve original git remote URL. Will skip restoration.");
+    catch {
+        console.warn("Warning: Could not retrieve original git remote URL. Aborting fix PR creation to avoid persisting credentials in .git/config.");
+        return;
+    }
+    if (!originalRemoteUrl) {
+        console.warn("Warning: Original git remote URL is empty or unavailable. Aborting fix PR creation to avoid persisting credentials in .git/config.");
+        return;
     }
     const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
     const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
