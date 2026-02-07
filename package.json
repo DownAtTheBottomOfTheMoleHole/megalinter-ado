@@ -4,16 +4,20 @@
   "description": "MegaLinter Azure DevOps Extension",
   "author": "DownAtTheBottomOfTheMoleHole",
   "dependencies": {
-    "@cucumber/cucumber": "12.6.0",
     "azure-pipelines-task-lib": "5.2.6",
     "mega-linter-runner": "9.3.0"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "12.6.0",
     "@eslint/js": "9.39.2",
+    "@types/mocha": "10.0.10",
     "@types/node": "25.1.0",
+    "@types/q": "1.5.8",
     "eslint": "9.39.2",
     "nyc": "17.1.0",
     "prettier": "3.8.1",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.3",
     "typescript-eslint": "8.54.0"
   },
   "engines": {
@@ -27,6 +31,7 @@
   },
   "scripts": {
     "audit": "npm audit",
+    "build": "cd megalinter && tsc",
     "clean": "rm -rf node_modules/ && rm -rf build/",
     "coverage": "nyc npm test",
     "format": "prettier --write .",

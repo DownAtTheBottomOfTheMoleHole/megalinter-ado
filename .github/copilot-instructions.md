@@ -29,17 +29,28 @@ The project uses token replacement (`#{ }#`) for secrets and configuration value
 - **Always compile TypeScript before testing**: `npm run build` or `tsc` in the `megalinter/` directory
 - The task entry point must be `megalinter.js` (not `.ts`)
 
-### Dual Package.json Structure
+### Package Management
 
-The project has **two** `package.json` files with different purposes:
+The project uses a unified npm dependency management system:
 
-1. **Root `package.json`**: Development tooling (Cucumber tests, linting, formatting)
-2. **`megalinter/package.json`**: Task runtime dependencies (azure-pipelines-task-lib, mega-linter-runner)
+1. **Root `package.json`**: Contains all dependencies (both runtime and development)
+   - Runtime dependencies: `azure-pipelines-task-lib`, `mega-linter-runner`
+   - Development dependencies: Testing frameworks, linters, TypeScript, etc.
+
+2. **`megalinter/package.json`**: Defines task metadata and dependencies for the Azure DevOps extension
+   - **Must be kept**: Required by Azure DevOps for Node.js-based tasks
+   - Contains the same runtime dependencies as root package.json
+   - No package-lock.json (only root has package-lock.json)
+
+3. **Build process**: 
+   - Development: Run `npm install` at root to install all dependencies
+   - CI/CD: Run `npm install` at root, then `npm install --production` in megalinter before packaging
+   - The megalinter/package-lock.json is removed to maintain single lock file at root
 
 When adding dependencies:
 
-- Runtime dependencies → `megalinter/package.json`
-- Test/dev dependencies → root `package.json`
+- Add to **root** `package.json` for development
+- Add to **megalinter** `package.json` if it's a runtime dependency needed by the task
 
 ## Development Workflows
 
