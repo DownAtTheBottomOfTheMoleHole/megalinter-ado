@@ -104,7 +104,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Check if tag already exists in remote repository
-          if ! git ls-remote --tags origin "v${{ env.GitVersion_MajorMinorPatch }}" | grep -q "v${{ env.GitVersion_MajorMinorPatch }}"; then
+          if [ -z "$(git ls-remote --tags origin "v${{ env.GitVersion_MajorMinorPatch }}")" ]; then
             git tag -a "v${{ env.GitVersion_MajorMinorPatch }}" -m "Release version ${{ env.GitVersion_MajorMinorPatch }}"
             git push origin "v${{ env.GitVersion_MajorMinorPatch }}"
           else
