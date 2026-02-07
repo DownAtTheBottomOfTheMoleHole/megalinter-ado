@@ -103,6 +103,7 @@ jobs:
 
   scan:
     runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[MegaLinter]')"
     continue-on-error: true
     steps:
       - name: Checkout main repo
@@ -140,6 +141,10 @@ jobs:
       - name: Install pnpm packages
         run: pnpm install
         if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Restore .npmrc
+        # Undo auth token written by 'Authenticate with NPM' so it doesn't leak into fix PRs
+        run: git checkout -- .npmrc
 
       - name: Run Megalinter
         run: |
