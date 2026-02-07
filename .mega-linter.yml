@@ -8,7 +8,8 @@ ENABLE_LINTERS: # If ENABLE_LINTERS is set, only listed linters will be processe
   - "ANSIBLE_ANSIBLE_LINT"
   - "KUBERNETES_KUBESCAPE"
   - "REPOSITORY_CHECKOV"
-  - "REPOSITORY_DEVSKIM"
+  # REPOSITORY_DEVSKIM disabled due to system error: System.Diagnostics.DiagnosticSource assembly not found
+  # - "REPOSITORY_DEVSKIM"
   - "REPOSITORY_DUSTILOCK"
   - "REPOSITORY_GITLEAKS"
   - "REPOSITORY_GRYPE"
@@ -22,7 +23,13 @@ ENABLE_LINTERS: # If ENABLE_LINTERS is set, only listed linters will be processe
   - "REPOSITORY_TRUFFLEHOG"
   - "TERRAFORM_TERRASCAN"
   - "TERRAFORM_TFLINT"
-FILTER_REGEX_EXCLUDE: "(node_modules/|.git/)" # Exclude node_modules and .git directories from all linters
+EXCLUDED_DIRECTORIES: # Directories to exclude from all linters
+  - node_modules
+  - .git
+  - dist
+  - megalinter-reports
+FILTER_REGEX_EXCLUDE: "(node_modules/|\.git/|dist/|megalinter-reports/)" # Exclude directories from all linters
+IGNORE_GITIGNORED_FILES: true # Honor .gitignore for file exclusions
 FAIL_IF_MISSING_LINTER_IN_FLAVOR: false # If set to true, MegaLinter fails if a linter is missing in the selected flavour
 FAIL_IF_UPDATED_SOURCES: false # If set to true, MegaLinter fails if a linter or formatter has auto-fixed sources, even if there are no errors
 FILEIO_REPORTER: false #if set to true this will generate a hyperlink to a report on file.io DO NOT ENABLE

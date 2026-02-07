@@ -139,6 +139,8 @@ jobs:
           git config --global user.name 'Megalinter runner'
           npx mega-linter-runner -r v9 --fix --flavor security
         env:
+          APPLY_FIXES_EVENT: all # Apply fixes on all events
+          APPLY_FIXES_MODE: commit # Commit fixes directly (use 'pull_request' for PR creation)
           AZURE_COMMENT_REPORTER: true
           CI: true
           DISABLE_ERRORS: true
@@ -152,6 +154,7 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Publish build artifacts
+        if: always() # Always publish artifacts even if scan fails
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: megalinter-reports
