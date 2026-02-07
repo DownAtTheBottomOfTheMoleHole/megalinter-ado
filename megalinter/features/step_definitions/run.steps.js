@@ -1,71 +1,109 @@
-'use strict'
-const __createBinding = (this && this.__createBinding) || (Object.create
-  ? function (o, m, k, k2) {
-    if (k2 === undefined) k2 = k
-    let desc = Object.getOwnPropertyDescriptor(m, k)
-    if (!desc || ('get' in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function () { return m[k] } }
-    }
-    Object.defineProperty(o, k2, desc)
-  }
-  : function (o, m, k, k2) {
-    if (k2 === undefined) k2 = k
-    o[k2] = m[k]
-  })
-const __setModuleDefault = (this && this.__setModuleDefault) || (Object.create
-  ? function (o, v) {
-    Object.defineProperty(o, 'default', { enumerable: true, value: v })
-  }
-  : function (o, v) {
-    o.default = v
-  })
-const __importStar = (this && this.__importStar) || (function () {
-  let ownKeys = function (o) {
-    ownKeys = Object.getOwnPropertyNames || function (o) {
-      const ar = []
-      for (const k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k
-      return ar
-    }
-    return ownKeys(o)
-  }
-  return function (mod) {
-    if (mod && mod.__esModule) return mod
-    const result = {}
-    if (mod != null) for (let k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== 'default') __createBinding(result, mod, k[i])
-    __setModuleDefault(result, mod)
-    return result
-  }
-})()
-const __importDefault = (this && this.__importDefault) || function (mod) {
-  return (mod && mod.__esModule) ? mod : { default: mod }
-}
-Object.defineProperty(exports, '__esModule', { value: true })
-const cucumber_1 = require('@cucumber/cucumber')
-const assert_1 = __importDefault(require('assert'))
-const tl = __importStar(require('azure-pipelines-task-lib/task'))
-const megalinter_1 = require('../../megalinter') // Ensure this path is correct
-let result = null
+"use strict";
+const __createBinding =
+  (this && this.__createBinding) ||
+  (Object.create
+    ? function (o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        let desc = Object.getOwnPropertyDescriptor(m, k);
+        if (
+          !desc ||
+          ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)
+        ) {
+          desc = {
+            enumerable: true,
+            get: function () {
+              return m[k];
+            },
+          };
+        }
+        Object.defineProperty(o, k2, desc);
+      }
+    : function (o, m, k, k2) {
+        if (k2 === undefined) k2 = k;
+        o[k2] = m[k];
+      });
+const __setModuleDefault =
+  (this && this.__setModuleDefault) ||
+  (Object.create
+    ? function (o, v) {
+        Object.defineProperty(o, "default", { enumerable: true, value: v });
+      }
+    : function (o, v) {
+        o.default = v;
+      });
+const __importStar =
+  (this && this.__importStar) ||
+  (function () {
+    let ownKeys = function (o) {
+      ownKeys =
+        Object.getOwnPropertyNames ||
+        function (o) {
+          const ar = [];
+          for (const k in o)
+            if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+          return ar;
+        };
+      return ownKeys(o);
+    };
+    return function (mod) {
+      if (mod && mod.__esModule) return mod;
+      const result = {};
+      if (mod != null)
+        for (let k = ownKeys(mod), i = 0; i < k.length; i++)
+          if (k[i] !== "default") __createBinding(result, mod, k[i]);
+      __setModuleDefault(result, mod);
+      return result;
+    };
+  })();
+const __importDefault =
+  (this && this.__importDefault) ||
+  function (mod) {
+    return mod && mod.__esModule ? mod : { default: mod };
+  };
+Object.defineProperty(exports, "__esModule", { value: true });
+const cucumber_1 = require("@cucumber/cucumber");
+const assert_1 = __importDefault(require("assert"));
+const tl = __importStar(require("azure-pipelines-task-lib/task"));
+const megalinter_1 = require("../../megalinter"); // Ensure this path is correct
+let result = null;
 let errorOccurred = false;
-(0, cucumber_1.Given)('the input parameters are valid', async function () {
+(0, cucumber_1.Given)("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
-  tl.getInput('sampleInput', true) // Example of getting a mock input
+  tl.getInput("sampleInput", true); // Example of getting a mock input
 });
-(0, cucumber_1.Given)('the input parameters are invalid', async function () {
+(0, cucumber_1.Given)("the input parameters are invalid", async function () {
   // Mock invalid input parameters or set error flag directly
-  errorOccurred = true
+  errorOccurred = true;
 });
-(0, cucumber_1.When)('the run function is called', async function () {
+(0, cucumber_1.When)("the run function is called", async function () {
   try {
-    if (errorOccurred) { throw new Error('Test error') }
-    await (0, megalinter_1.run)()
-    result = 'success'
+    if (errorOccurred) {
+      throw new Error("Test error");
+    }
+    await (0, megalinter_1.run)();
+    result = "success";
   } catch (error) {
-    if (error instanceof Error) { result = error.message } else { result = 'Unknown error occurred' }
+    if (error instanceof Error) {
+      result = error.message;
+    } else {
+      result = "Unknown error occurred";
+    }
   }
 });
-(0, cucumber_1.Then)('the function should execute successfully', function () {
-  assert_1.default.strictEqual(result, 'success', 'Expected the function to execute successfully, but it did not.')
+(0, cucumber_1.Then)("the function should execute successfully", function () {
+  assert_1.default.strictEqual(
+    result,
+    "success",
+    "Expected the function to execute successfully, but it did not.",
+  );
 });
-(0, cucumber_1.Then)('the function should fail with an error message', function () {
-  assert_1.default.strictEqual(result, 'Test error', 'Expected the function to fail with a specific error message, but it did not.')
-})
+(0, cucumber_1.Then)(
+  "the function should fail with an error message",
+  function () {
+    assert_1.default.strictEqual(
+      result,
+      "Test error",
+      "Expected the function to fail with a specific error message, but it did not.",
+    );
+  },
+);

@@ -6,6 +6,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green)](https://nodejs.org/)
 
+> **Note:** This is not an official MegaLinter extension. However, it has been reviewed and approved by the [MegaLinter](https://megalinter.io) project.
+
 Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelines. Analyze 50+ languages, apply auto-fixes, and get PR comments—all with a simple task configuration.
 
 ## Installation
@@ -31,34 +33,35 @@ Run [Ox Security MegaLinter](https://megalinter.io) in your Azure DevOps pipelin
 Configure MegaLinter using the Azure DevOps task assistant:
 
 <!-- TODO: Add screenshot of task configuration UI -->
+
 ![Task Configuration](.assets/screenshot.png)
 
 ## Task Inputs
 
-| Input | Description | Default |
-|-------|-------------|---------|
-| `flavor` | MegaLinter flavor (all, javascript, python, security, etc.) | `all` |
-| `release` | Docker image tag (v9, latest, etc.) | `v9` |
-| `fix` | Auto-fix issues | `false` |
-| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds) | `false` |
-| `createFixPR` | Create PR with fixes (when fix=true) | `true` |
-| `path` | Directory to lint | Pipeline workspace |
-| `configFile` | Path to .mega-linter.yml | Auto-detected |
-| `reportsPath` | Reports output directory | `megalinter-reports` |
-| `disableLinters` | Comma-separated linters to disable | - |
+| Input              | Description                                                 | Default              |
+| ------------------ | ----------------------------------------------------------- | -------------------- |
+| `flavor`           | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
+| `release`          | Docker image tag (v9, latest, etc.)                         | `v9`                 |
+| `fix`              | Auto-fix issues                                             | `false`              |
+| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
+| `createFixPR`      | Create PR with fixes (when fix=true)                        | `true`               |
+| `path`             | Directory to lint                                           | Pipeline workspace   |
+| `configFile`       | Path to .mega-linter.yml                                    | Auto-detected        |
+| `reportsPath`      | Reports output directory                                    | `megalinter-reports` |
+| `disableLinters`   | Comma-separated linters to disable                          | -                    |
 
 See [all available inputs](docs/CONFIGURATION.md) for the complete list.
 
 ## Flavors
 
-| Flavor | Languages |
-|--------|-----------|
-| `all` | Everything (largest image) |
-| `javascript` | JS, TS, JSON, CSS, HTML |
-| `python` | Python, YAML, JSON |
-| `dotnet` | C#, VB.NET, PowerShell |
-| `security` | Security-focused linters only |
-| `terraform` | Terraform, HCL |
+| Flavor       | Languages                     |
+| ------------ | ----------------------------- |
+| `all`        | Everything (largest image)    |
+| `javascript` | JS, TS, JSON, CSS, HTML       |
+| `python`     | Python, YAML, JSON            |
+| `dotnet`     | C#, VB.NET, PowerShell        |
+| `security`   | Security-focused linters only |
+| `terraform`  | Terraform, HCL                |
 
 [View all flavors](https://megalinter.io/latest/flavors/)
 

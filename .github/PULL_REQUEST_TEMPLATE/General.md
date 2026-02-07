@@ -1,17 +1,22 @@
 ## Summary
+
 <!-- Please provide a summary of the change and which issue is fixed. -->
 
 ## Motivation / Context
+
 <!-- Why is this change required? What problem does it solve? -->
 
 ## How Has This Been Tested?
+
 <!-- Please describe how you tested your changes. -->
 
 ## Related Issues / PRs
+
 Closes #
 Related to #
 
 ## Checklist
+
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas

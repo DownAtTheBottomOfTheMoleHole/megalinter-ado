@@ -53,7 +53,7 @@ async function createFixPullRequest(
   sourceBranch: string,
   targetBranch: string,
   title: string,
-  description: string
+  description: string,
 ): Promise<boolean> {
   const collectionUri = tl.getVariable("System.CollectionUri");
   const project = tl.getVariable("System.TeamProject");
@@ -105,7 +105,7 @@ async function createFixPullRequest(
               resolve(false);
             }
           });
-        }
+        },
       );
 
       req.on("error", (err) => {
@@ -125,7 +125,10 @@ async function createFixPullRequest(
 /**
  * Commits and pushes MegaLinter fixes to a new branch and creates a PR
  */
-async function handleFixPullRequest(workingDir: string, isPullRequest: boolean): Promise<void> {
+async function handleFixPullRequest(
+  workingDir: string,
+  isPullRequest: boolean,
+): Promise<void> {
   console.log("Starting handleFixPullRequest with workingDir:", workingDir);
   const createPR = tl.getBoolInput("createFixPR");
   console.log("createFixPR input:", createPR);
@@ -135,7 +138,9 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
   }
 
   if (isPullRequest) {
-    console.log("Pull request build detected - skipping fix PR creation as fixes are applied to the PR branch");
+    console.log(
+      "Pull request build detected - skipping fix PR creation as fixes are applied to the PR branch",
+    );
     return;
   }
 
@@ -144,8 +149,15 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
   const statusResult = tl.execSync("git", ["status", "--porcelain"], {
     cwd: workingDir,
   });
-  console.log("Git status result - code:", statusResult.code, "stdout:", statusResult.stdout, "stderr:", statusResult.stderr);
-  
+  console.log(
+    "Git status result - code:",
+    statusResult.code,
+    "stdout:",
+    statusResult.stdout,
+    "stderr:",
+    statusResult.stderr,
+  );
+
   if (!statusResult.stdout || !statusResult.stdout.trim()) {
     console.log("No fixes to commit - working directory is clean");
     return;
@@ -177,7 +189,7 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
   const checkoutResult = tl.execSync("git", ["checkout", "-b", fixBranchName], {
     cwd: workingDir,
   });
-  
+
   if (checkoutResult.code !== 0) {
     console.log(`Failed to create fix branch: ${checkoutResult.stderr}`);
     return;
@@ -191,24 +203,29 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
   const commitResult = tl.execSync("git", ["commit", "-m", commitMessage], {
     cwd: workingDir,
   });
-  
+
   if (commitResult.code !== 0) {
     console.log(`Failed to commit fixes: ${commitResult.stderr}`);
     return;
   }
 
   // Set authenticated remote URL for push
-  const baseUrl = collectionUri!.replace(/^https:\/\//, `https://${accessToken}@`);
+  const baseUrl = collectionUri!.replace(
+    /^https:\/\//,
+    `https://${accessToken}@`,
+  );
   const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
-  tl.execSync("git", ["remote", "set-url", "origin", gitUrl], { cwd: workingDir });
+  tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
+    cwd: workingDir,
+  });
 
   // Push the branch
   const pushResult = tl.execSync(
     "git",
     ["push", "-u", "origin", fixBranchName],
-    { cwd: workingDir }
+    { cwd: workingDir },
   );
-  
+
   if (pushResult.code !== 0) {
     console.log(`Failed to push fix branch: ${pushResult.stderr}`);
     return;
@@ -218,17 +235,19 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
 
   // Create the pull request
   const prTitle = "fix(lint): apply MegaLinter auto-fixes"; // 41 chars, under 72
-  
+
   // Replace variables in description
-  let prDescription = PR_DESCRIPTION_TEMPLATE
-    .replace(/\$\(Build\.BuildId\)/g, buildId)
+  let prDescription = PR_DESCRIPTION_TEMPLATE.replace(
+    /\$\(Build\.BuildId\)/g,
+    buildId,
+  )
     .replace(
       /\$\(System\.CollectionUri\)/g,
-      tl.getVariable("System.CollectionUri") || ""
+      tl.getVariable("System.CollectionUri") || "",
     )
     .replace(
       /\$\(System\.TeamProject\)/g,
-      tl.getVariable("System.TeamProject") || ""
+      tl.getVariable("System.TeamProject") || "",
     )
     .replace(/\$\(Build\.SourceBranch\)/g, sourceBranch);
 
@@ -241,10 +260,12 @@ async function handleFixPullRequest(workingDir: string, isPullRequest: boolean):
     fixBranchName,
     sourceBranchName,
     prTitle,
-    prDescription
+    prDescription,
   );
 
-  console.log(`Attempted to create PR from '${fixBranchName}' to '${sourceBranchName}'`);
+  console.log(
+    `Attempted to create PR from '${fixBranchName}' to '${sourceBranchName}'`,
+  );
 }
 
 // Define an asynchronous function named 'run' with a return type of Promise<void>
@@ -255,7 +276,11 @@ export async function run(): Promise<void> {
     const release = tl.getInput("release") || "latest";
     const runnerVersion = tl.getInput("runnerVersion") || "latest";
     const customImage = tl.getInput("image");
-    const workingDir = tl.getVariable("Build.SourcesDirectory") || tl.getInput("path") || tl.getVariable("Pipeline.Workspace") || ".";
+    const workingDir =
+      tl.getVariable("Build.SourcesDirectory") ||
+      tl.getInput("path") ||
+      tl.getVariable("Pipeline.Workspace") ||
+      ".";
 
     // Check if this is a pull request build
     const buildReason = tl.getVariable("Build.Reason");
@@ -333,11 +358,11 @@ export async function run(): Promise<void> {
 
     if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
       console.log(
-        `Docker image '${dockerImageName}' found in cache. Skipping pull.`
+        `Docker image '${dockerImageName}' found in cache. Skipping pull.`,
       );
     } else {
       console.log(`Pulling Docker image: ${dockerImageName}`);
-      
+
       // Use async exec for streaming output during docker pull
       const dockerTool = tl.tool("docker");
       dockerTool.arg(["pull", dockerImageName]);
@@ -349,7 +374,7 @@ export async function run(): Promise<void> {
       if (dockerPullCode !== 0) {
         tl.setResult(
           tl.TaskResult.Failed,
-          `Failed to pull Docker image: ${dockerImageName}`
+          `Failed to pull Docker image: ${dockerImageName}`,
         );
         return;
       }
@@ -365,17 +390,23 @@ export async function run(): Promise<void> {
     console.log(`Running: npx ${npxPackage} ${args.join(" ")}`);
 
     // Build environment variables for the mega-linter-runner process
-    const execEnv: { [key: string]: string } = { ...process.env } as { [key: string]: string };
+    const execEnv: { [key: string]: string } = { ...process.env } as {
+      [key: string]: string;
+    };
 
     // Enable Azure DevOps PR comment reporter when in PR context
     if (shouldEnablePRComments) {
       console.log("Enabling Azure DevOps PR comment reporter");
       execEnv["AZURE_COMMENT_REPORTER"] = "true";
-      execEnv["SYSTEM_ACCESSTOKEN"] = tl.getVariable("System.AccessToken") || "";
-      execEnv["SYSTEM_COLLECTIONURI"] = tl.getVariable("System.CollectionUri") || "";
-      execEnv["SYSTEM_TEAMPROJECT"] = tl.getVariable("System.TeamProject") || "";
+      execEnv["SYSTEM_ACCESSTOKEN"] =
+        tl.getVariable("System.AccessToken") || "";
+      execEnv["SYSTEM_COLLECTIONURI"] =
+        tl.getVariable("System.CollectionUri") || "";
+      execEnv["SYSTEM_TEAMPROJECT"] =
+        tl.getVariable("System.TeamProject") || "";
       execEnv["BUILD_BUILD_ID"] = tl.getVariable("Build.BuildId") || "";
-      execEnv["BUILD_REPOSITORY_ID"] = tl.getVariable("Build.Repository.ID") || "";
+      execEnv["BUILD_REPOSITORY_ID"] =
+        tl.getVariable("Build.Repository.ID") || "";
     }
 
     // Set additional MegaLinter configuration from inputs
@@ -396,7 +427,7 @@ export async function run(): Promise<void> {
     // Use async exec for real-time streaming output
     const npxTool = tl.tool("npx");
     npxTool.arg([npxPackage, ...args]);
-    
+
     const resultCode = await npxTool.exec({
       failOnStdErr: false,
       silent: false,
@@ -408,7 +439,9 @@ export async function run(): Promise<void> {
 
     // Publish reports as artifact if path is set
     if (reportsPath) {
-      console.log(`##vso[artifact.upload artifactname=MegaLinterReports;]${reportsPath}`);
+      console.log(
+        `##vso[artifact.upload artifactname=MegaLinterReports;]${reportsPath}`,
+      );
     }
 
     // Handle fix PR creation if fixes were applied
@@ -420,10 +453,13 @@ export async function run(): Promise<void> {
     if (resultCode !== 0) {
       tl.setResult(
         tl.TaskResult.Failed,
-        "MegaLinter execution failed with exit code " + resultCode
+        "MegaLinter execution failed with exit code " + resultCode,
       );
     } else {
-      tl.setResult(tl.TaskResult.Succeeded, "MegaLinter completed successfully");
+      tl.setResult(
+        tl.TaskResult.Succeeded,
+        "MegaLinter completed successfully",
+      );
     }
   } catch (err) {
     if (err instanceof Error) {
