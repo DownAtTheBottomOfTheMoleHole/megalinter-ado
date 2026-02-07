@@ -235,7 +235,7 @@ async function handleFixPullRequest(
     );
     originalRemoteUrl =
       getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
-  } catch (err) {
+  } catch {
     console.warn(
       "Warning: Could not retrieve original git remote URL. Will skip restoration.",
     );

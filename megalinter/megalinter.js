@@ -223,7 +223,7 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         originalRemoteUrl =
             getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
     }
-    catch (err) {
+    catch {
         console.warn("Warning: Could not retrieve original git remote URL. Will skip restoration.");
     }
     const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
