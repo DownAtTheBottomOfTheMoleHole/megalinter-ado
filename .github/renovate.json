@@ -3,7 +3,6 @@
   "description": "Renovate config for megalinter-ado Azure DevOps extension",
   "extends": ["config:best-practices", "group:allNonMajor"],
   "addLabels": ["renovate", "bot", "dependencies"],
-  "gitAuthor": "DBMH Renovate <renovate@dbmh.com>",
   "timezone": "GB",
   "schedule": ["after 9am and before 5pm every weekday"],
   "prConcurrentLimit": 5,
@@ -16,8 +15,11 @@
   "ignoreDeprecated": true,
   "ignoreUnstable": true,
   "updatePinnedDependencies": true,
-  "useBaseBranchConfig": "merge",
-  "unicodeEmoji": true,
+  "ignorePaths": [
+    "**/megalinter/package-lock.json",
+    "**/pnpm-lock.yaml",
+    "**/yarn.lock"
+  ],
   "packageRules": [
     {
       "description": "Dont update Azure Pipelines tasks, it breaks things",

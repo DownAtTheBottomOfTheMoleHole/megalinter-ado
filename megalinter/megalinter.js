@@ -213,48 +213,24 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         console.log(`Failed to commit fixes: ${commitResult.stderr}`);
         return;
     }
-    // Set authenticated remote URL for push
-    // First, save the original remote URL to restore it later
-    let originalRemoteUrl = "";
-    try {
-        const getRemoteResult = tl.execSync("git", ["remote", "get-url", "origin"], {
-            cwd: workingDir,
-        });
-        originalRemoteUrl =
-            getRemoteResult.code === 0 ? getRemoteResult.stdout.trim() : "";
-    }
-    catch {
-        console.warn("Warning: Could not retrieve original git remote URL. Aborting fix PR creation to avoid persisting credentials in .git/config.");
-        return;
-    }
-    if (!originalRemoteUrl) {
-        console.warn("Warning: Original git remote URL is empty or unavailable. Aborting fix PR creation to avoid persisting credentials in .git/config.");
-        return;
-    }
-    const baseUrl = collectionUri.replace(/^https:\/\//, `https://${accessToken}@`);
-    const gitUrl = `${baseUrl}${project}/_git/${repoName}`;
-    tl.execSync("git", ["remote", "set-url", "origin", gitUrl], {
-        cwd: workingDir,
+    // Push the branch using the System.AccessToken via an HTTP header
+    // to avoid embedding the token in the remote URL or .git/config.
+    const extraHeader = `AUTHORIZATION: bearer ${accessToken}`;
+    // Mask the access token (and derived header) so it does not appear in logs
+    tl.setSecret(accessToken);
+    tl.setSecret(extraHeader);
+    // Prefer passing the header via an environment variable instead of command-line args
+    const gitEnv = Object.assign({}, process.env, {
+        GIT_HTTP_EXTRAHEADER: extraHeader,
     });
-    // Push the branch
-    const pushResult = tl.execSync("git", ["push", "-u", "origin", fixBranchName], { cwd: workingDir });
-    // Restore the original remote URL to avoid persisting the token in .git/config
-    if (originalRemoteUrl) {
-        try {
-            tl.execSync("git", ["remote", "set-url", "origin", originalRemoteUrl], {
-                cwd: workingDir,
-            });
-            console.log("✅ Restored original git remote URL (token cleaned up)");
-        }
-        catch (err) {
-            console.error("❌ Failed to restore original git remote URL. Token may persist in .git/config!");
-            if (err instanceof Error) {
-                console.error(`Error: ${err.message}`);
-            }
-        }
-    }
+    const pushResult = tl.execSync("git", [
+        "push",
+        "-u",
+        "origin",
+        fixBranchName,
+    ], { cwd: workingDir, env: gitEnv });
     if (pushResult.code !== 0) {
-        console.log(`Failed to push fix branch: ${pushResult.stderr}`);
+        console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
     }
     console.log(`✅ Pushed fixes to branch: ${fixBranchName}`);
