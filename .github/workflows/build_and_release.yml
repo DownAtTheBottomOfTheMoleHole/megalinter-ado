@@ -39,9 +39,10 @@ jobs:
 
       - name: Set extension version
         run: |
-          # Use 3-component version for all builds from main
-          echo "EXTENSION_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> $GITHUB_ENV
-          echo "Building version: ${{ env.GitVersion_MajorMinorPatch }}"
+          # Use a 4-component, monotonically increasing version for all builds from main
+          EXT_VERSION="${{ env.GitVersion_MajorMinorPatch }}.${{ env.GitVersion_CommitsSinceVersionSource }}"
+          echo "EXTENSION_VERSION=$EXT_VERSION" >> "$GITHUB_ENV"
+          echo "Building version: $EXT_VERSION"
 
       - name: Replace token in task.json
         uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
