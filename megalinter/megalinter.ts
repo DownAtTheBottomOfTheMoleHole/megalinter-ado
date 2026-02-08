@@ -224,7 +224,7 @@ async function handleFixPullRequest(
 
   // Push the branch using the System.AccessToken via an HTTP header
   // to avoid embedding the token in the remote URL or .git/config.
-  const extraHeader = `AUTHORIZATION: bearer ${accessToken}`;
+  const extraHeader = `Authorization: Bearer ${accessToken}`;
   const pushResult = tl.execSync(
     "git",
     [
