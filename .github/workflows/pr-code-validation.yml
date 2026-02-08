@@ -135,6 +135,6 @@ jobs:
 
       - name: Publish private extension
         env:
-          AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_SERVICE_CONNECTION }}
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
         run: |
           tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token "${AZURE_DEVOPS_EXT_PAT}" --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}

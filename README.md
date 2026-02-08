@@ -217,7 +217,7 @@ The **PR Code Validation and Publish Private Extension** workflow (`.github/work
 
 To use this workflow, configure the following GitHub secrets in your repository settings:
 
-- `ADO_SERVICE_CONNECTION` - Azure DevOps Personal Access Token (PAT) with marketplace publish permissions
+- `AZURE_DEVOPS_EXT_PAT` - Azure DevOps Personal Access Token (PAT) with marketplace publish permissions
 - `AZURE_DEVOPS_ORGS` - Comma-separated list of Azure DevOps organizations to share the private extension with
 - `TASK_AUTHOR`, `TASK_DESCRIPTION`, `TASK_FRIENDLYNAME`, `TASK_HELPMARKDOWN`, `TASK_NAME`, `TASK_ID` - Task metadata
 - `PRIVATE_EXTENSIONID`, `PRIVATE_EXTENSIONNAME`, `PUBLISHERID` - Extension metadata
