@@ -1,0 +1,140 @@
+name: PR Code Validation and Publish Private Extension
+
+# Trigger on pull requests to main or dev branches
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  npm_cache: ${{ github.workspace }}/npm_cache
+
+jobs:
+  # Build and test job
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: "20.x"
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Run unit tests
+        timeout-minutes: 2
+        env:
+          INPUT_SAMPLEINPUT: "test-value"
+          INPUT_FLAVOR: "all"
+          INPUT_RELEASE: "latest"
+          INPUT_FIX: "false"
+          INPUT_CREATEFIXPR: "false"
+          INPUT_ENABLEPRCOMMENTS: "false"
+        run: npx --no-install cucumber-js megalinter/features/*.feature --require 'megalinter/features/step_definitions/*.js'
+
+      - name: Build TypeScript
+        run: npm run build
+
+  # Private extension publish job
+  publish-private-extension:
+    name: Publish Private Extension
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    # Only run if PR is from the same repository (not a fork)
+    # This prevents exposing secrets to untrusted PR code from forks
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
+        with:
+          versionSpec: "6.x"
+          preferLatestVersion: true
+
+      - name: Determine Version
+        uses: gittools/actions/gitversion/execute@d0139503a9321f76b4a417dfdc8aebcec24decdd # v4.2.0
+        with:
+          configFilePath: GitVersion.yml
+
+      - name: Replace tokens in task.json
+        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
+        with:
+          files: "megalinter/task.json"
+          tokenPrefix: "#{"
+          tokenSuffix: "}#"
+        env:
+          task_author: ${{ secrets.TASK_AUTHOR }}
+          task_description: ${{ secrets.TASK_DESCRIPTION }}
+          task_friendlyname: ${{ secrets.TASK_FRIENDLYNAME }}
+          task_helpmarkdown: ${{ secrets.TASK_HELPMARKDOWN }}
+          task_name: ${{ secrets.TASK_NAME }}
+          task_id: ${{ secrets.TASK_ID }}
+          major: ${{ env.GitVersion_Major }}
+          minor: ${{ env.GitVersion_Minor }}
+          patch: ${{ env.GitVersion_Patch }}
+
+      - name: Replace tokens in vss-extension.json
+        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
+        with:
+          files: "vss-extension.json"
+          tokenPrefix: "#{"
+          tokenSuffix: "}#"
+        env:
+          public_extensionId: ${{ secrets.PRIVATE_EXTENSIONID }}
+          public_extensionName: ${{ secrets.PRIVATE_EXTENSIONNAME }}
+          publisherId: ${{ secrets.PUBLISHERID }}
+          task_id: ${{ secrets.TASK_ID }}
+          task_name: ${{ secrets.TASK_NAME }}
+          version: ${{ env.GitVersion_MajorMinorPatch }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
+        with:
+          node-version: "20.x"
+          check-latest: true
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build TypeScript
+        run: npx tsc
+        working-directory: megalinter
+
+      - name: Install task dependencies (production only)
+        run: |
+          npm install --production
+          rm -f package-lock.json
+        working-directory: megalinter
+        shell: bash
+
+      - name: Install tfx-cli
+        run: npm install -g tfx-cli
+
+      - name: Package private extension
+        run: tfx extension create --manifest-globs vss-extension.json --output-path ./private-extension.vsix
+
+      - name: Publish private extension
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.AZURE_DEVOPS_EXT_PAT }}
+        run: |
+          tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token "${AZURE_DEVOPS_EXT_PAT}" --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}

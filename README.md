@@ -189,6 +189,48 @@ npm run lint
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+### CI/CD Workflows
+
+This repository includes the following GitHub Actions workflows:
+
+#### PR Code Validation
+
+The **PR Code Validation and Publish Private Extension** workflow (`.github/workflows/pr-code-validation.yml`) runs automatically on pull requests to the `main` or `dev` branches. It ensures code quality by:
+
+1. **Building and testing the code:**
+   - Checking out the repository
+   - Setting up Node.js runtime
+   - Installing dependencies
+   - Running linters (`npm run lint`)
+   - Executing Cucumber BDD tests (`npx --no-install cucumber-js`, instead of `npm test` to avoid the `posttest` coverage loop in CI)
+   - Building the TypeScript code (`npm run build`)
+
+2. **Publishing a private extension:**
+   - Checking PR mergeability
+   - Installing GitVersion for semantic versioning
+   - Replacing tokens in configuration files
+   - Installing tfx-cli for Azure DevOps extension management
+   - Authenticating with Azure DevOps
+   - Packaging and publishing the private extension to your organization
+
+**Required Secrets:**
+
+To use this workflow, configure the following GitHub secrets in your repository settings:
+
+- `AZURE_DEVOPS_EXT_PAT` - Azure DevOps Personal Access Token (PAT) with marketplace publish permissions
+- `AZURE_DEVOPS_ORGS` - Comma-separated list of Azure DevOps organizations to share the private extension with
+- `TASK_AUTHOR`, `TASK_DESCRIPTION`, `TASK_FRIENDLYNAME`, `TASK_HELPMARKDOWN`, `TASK_NAME`, `TASK_ID` - Task metadata
+- `PRIVATE_EXTENSIONID`, `PRIVATE_EXTENSIONNAME`, `PUBLISHERID` - Extension metadata
+
+**Branch Protection:**
+
+To enforce this workflow as a required check before merging:
+
+1. Go to **Settings** → **Branches** in your GitHub repository
+2. Add or edit a branch protection rule for `main` and/or `dev`
+3. Enable **Require status checks to pass before merging**
+4. Select **Build and Test** as a required status check
+
 ## License
 
 [GPL-3.0](LICENSE.md)
