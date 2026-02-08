@@ -215,20 +215,15 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
     }
     // Push the branch using the System.AccessToken via an HTTP header
     // to avoid embedding the token in the remote URL or .git/config.
-    const extraHeader = `AUTHORIZATION: bearer ${accessToken}`;
-    // Mask the access token (and derived header) so it does not appear in logs
-    tl.setSecret(accessToken);
-    tl.setSecret(extraHeader);
-    // Prefer passing the header via an environment variable instead of command-line args
-    const gitEnv = Object.assign({}, process.env, {
-        GIT_HTTP_EXTRAHEADER: extraHeader,
-    });
+    const extraHeader = `Authorization: Bearer ${accessToken}`;
     const pushResult = tl.execSync("git", [
+        "-c",
+        `http.extraheader=${extraHeader}`,
         "push",
         "-u",
         "origin",
         fixBranchName,
-    ], { cwd: workingDir, env: gitEnv });
+    ], { cwd: workingDir });
     if (pushResult.code !== 0) {
         console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
