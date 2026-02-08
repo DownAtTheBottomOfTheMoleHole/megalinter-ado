@@ -147,17 +147,38 @@ This would increment from v1.1.7 to v1.2.0 on the next tagged release.
 
 ## Azure DevOps Version Constraints
 
-Azure DevOps Marketplace extensions have specific version requirements:
+Azure DevOps has different version requirements for different components:
+
+### Extension Manifest (vss-extension.json)
 
 ✅ **Supported**:
 - `1.0.0` (3 components)
-- `1.0.0.1` (4 components)
+- `1.0.0.1` (4 components) - **Used for preview builds**
 
 ❌ **Not Supported**:
 - `1.0.0-beta` (pre-release tags)
 - `1.0.0-rc.1` (pre-release with metadata)
 
-This is why we use numeric 4-component versions for previews instead of semantic versioning pre-release tags.
+### Task Definition (task.json)
+
+✅ **Only Supports**:
+- `Major`, `Minor`, `Patch` (3 components only)
+
+❌ **Not Supported**:
+- 4th component (build number)
+- Pre-release tags
+
+### Why This Matters
+
+**It is normal and expected** for the extension version and task version to differ:
+- **Extension version** (in vss-extension.json): Tracks the marketplace package (e.g., 1.1.7.123 for previews, 1.1.7 for releases)
+- **Task version** (in task.json): What users reference in pipelines (e.g., `MegaLinter@1` always uses major version 1)
+
+This implementation uses:
+- Preview builds: Extension version `1.1.7.123`, Task version `1.1.7`
+- Release builds: Extension version `1.1.7`, Task version `1.1.7`
+
+The 4th component in preview extension versions allows unique builds without affecting the task's major version that users reference.
 
 ## Troubleshooting
 
