@@ -50,7 +50,7 @@ let errorOccurred = false;
     try {
         tl.getInput("sampleInput", false); // Don't require, just test
     }
-    catch (error) {
+    catch {
         // Expected in some environments, that's okay
     }
 });

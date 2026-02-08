@@ -13,7 +13,7 @@ Given("the input parameters are valid", async function () {
   // Just verify we can get the input without error
   try {
     tl.getInput("sampleInput", false); // Don't require, just test
-  } catch (error) {
+  } catch {
     // Expected in some environments, that's okay
   }
 });
