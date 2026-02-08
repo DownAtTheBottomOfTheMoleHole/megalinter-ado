@@ -96,12 +96,10 @@ jobs:
         run: npm install -g tfx-cli
 
       - name: Package Private Extension
-        if: ${{ !cancelled() }}
         run: tfx extension create --manifest-globs vss-extension.json --output-path ./private-extension.vsix
 
       - name: Publish Private Extension
         id: publish-private
-        if: ${{ !cancelled() }}
         run: |
           tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.AZURE_DEVOPS_EXT_PAT }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
 
