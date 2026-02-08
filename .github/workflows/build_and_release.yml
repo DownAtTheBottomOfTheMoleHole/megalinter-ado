@@ -37,6 +37,13 @@ jobs:
         with:
           configFilePath: GitVersion.yml
 
+      - name: Set extension version
+        run: |
+          # Use a 4-component, monotonically increasing version for all builds from main
+          EXT_VERSION="${{ env.GitVersion_MajorMinorPatch }}.${{ env.GitVersion_CommitsSinceVersionSource }}"
+          echo "EXTENSION_VERSION=$EXT_VERSION" >> "$GITHUB_ENV"
+          echo "Building version: $EXT_VERSION"
+
       - name: Replace token in task.json
         uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
         with:
@@ -66,7 +73,7 @@ jobs:
           publisherId: ${{ secrets.PUBLISHERID }}
           task_id: ${{ secrets.TASK_ID }}
           task_name: ${{ secrets.TASK_NAME }}
-          version: ${{ env.GitVersion_MajorMinorPatch }}
+          version: ${{ env.EXTENSION_VERSION }}
 
       - name: Install Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6
@@ -235,7 +242,8 @@ jobs:
   public_release:
     runs-on: ubuntu-latest
     needs: [build, scan]
-    if: ${{ always() && needs.build.result == 'success' }}
+    # Run public release automatically on push to main, but only if build and scan succeed
+    if: ${{ needs.build.result == 'success' && (needs.scan.result == 'success' || needs.scan.result == 'skipped') }}
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6

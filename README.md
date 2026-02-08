@@ -157,6 +157,7 @@ SHOW_ELAPSED_TIME: true
 - [Configuration Guide](https://megalinter.io/latest/configuration/)
 - [Available Flavors](https://megalinter.io/latest/flavors/)
 - [GitHub Repository](https://github.com/DownAtTheBottomOfTheMoleHole/megalinter-ado)
+- [Extension Versioning Strategy](docs/VERSIONING.md)
 
 ## Development
 
