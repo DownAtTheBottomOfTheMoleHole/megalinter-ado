@@ -94,10 +94,10 @@ on:
 
 **What happens on push to main**:
 1. GitVersion increments patch version automatically
-2. Builds with 3-component version (e.g., 1.1.7)
-3. Publishes private extension with version 1.1.7
-4. Publishes public extension with version 1.1.7
-5. Creates git tag v1.1.7
+2. Builds with 3-component version (e.g., 1.1.8)
+3. Publishes private extension with version 1.1.8
+4. Publishes public extension with version 1.1.8
+5. Creates git tag v1.1.8
 6. Creates GitHub release
 
 **What happens on workflow_dispatch**:
