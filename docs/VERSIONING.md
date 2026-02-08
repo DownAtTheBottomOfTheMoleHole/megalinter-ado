@@ -176,7 +176,7 @@ Check that `github.run_number` is being used correctly in the workflow. Each Git
 
 ### Public release has wrong version
 
-Ensure you're using `workflow_dispatch` trigger, not automatic push to main. The workflow checks the event type to determine which version format to use.
+Public releases are created automatically on `push` to the `main` branch. Verify that your changes were merged into `main` and that the corresponding `build_and_release.yml` run completed successfully. You can also use the `workflow_dispatch` trigger from the Actions tab to manually rerun the release workflow if needed, but it uses the same versioning logic as the automatic `push` trigger.
 
 ### Version doesn't increment after tagging
 
