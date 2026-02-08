@@ -17,12 +17,12 @@ Each merge to main automatically increments the version and publishes both priva
 
 When a pull request is created or updated:
 
-- **Version Format**: `Major.Minor.Patch.Timestamp` (4 components)
-- **Example**: `1.1.7.202602082130`
+- **Version Format**: `Major.Minor.Patch.RunNumber` (4 components)
+- **Example**: `1.1.7.123`
 - **Purpose**: Creates unique preview versions for testing
 - **Published**: Private extension only (shared with configured orgs)
 
-The 4th component (Timestamp in YYYYMMDDHHMM format) ensures each PR build gets a unique, monotonically increasing version without conflicts in stacked PRs.
+The 4th component (`github.run_number`) ensures each PR build gets a unique, auto-incrementing version. This value is always within the TFX CLI's version component limit (0-2147483647).
 
 ### 2. Main Branch Automatic Builds (Public & Private Extensions)
 
@@ -49,12 +49,12 @@ With ContinuousDeployment mode, every commit to main creates a public release:
 
 ### Unique Preview Versions
 
-PR builds get unique version numbers using a timestamp as the 4th component:
+PR builds get unique version numbers using `github.run_number` as the 4th component:
 
-- No conflicts when publishing to Azure DevOps (monotonically increasing)
-- Works correctly with stacked PRs (no version rollback issues)
+- No conflicts when publishing to Azure DevOps (auto-incrementing)
+- Works correctly with most PR workflows
 - Clear distinction between PR preview and main release builds
-- Timestamp format (YYYYMMDDHHMM) ensures versions always increase
+- Always within TFX CLI's 32-bit integer limit (0-2147483647)
 
 ## GitVersion Configuration
 
@@ -87,8 +87,8 @@ on:
 **What happens**:
 
 1. GitVersion determines base version (e.g., 1.1.7)
-2. Adds timestamp as 4th component (e.g., 202602082130)
-3. Publishes private extension with version 1.1.7.{timestamp}
+2. Adds GitHub run number as 4th component (e.g., 123)
+3. Publishes private extension with version 1.1.7.123
 
 ### Build and Release Workflow
 
@@ -146,6 +146,15 @@ This would increment from v1.1.7 to v1.2.0 on the next merge to main.
 ## Azure DevOps Version Constraints
 
 Azure DevOps has different version requirements for different components:
+
+### TFX CLI Version Component Limits
+
+**Each version component must be in the range 0 to 2,147,483,647** (32-bit signed integer maximum).
+
+- ✅ Valid: `1.0.0`, `1.0.0.123`, `1.2.3.999999`
+- ❌ Invalid: `1.0.0.202602082217` (exceeds 2,147,483,647)
+
+This is why PR builds use `github.run_number` (small auto-incrementing integer) rather than timestamps.
 
 ### Extension Manifest (vss-extension.json)
 

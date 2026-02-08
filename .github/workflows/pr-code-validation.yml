@@ -76,13 +76,11 @@ jobs:
         with:
           configFilePath: GitVersion.yml
 
-      - name: Set PR version with timestamp
+      - name: Set PR version with build number
         run: |
-          # Use timestamp-based build number to ensure monotonically increasing versions
-          # Format: YYYYMMDDHHMM (e.g., 202602082130)
-          BUILD_NUMBER=$(date -u +"%Y%m%d%H%M")
-          echo "PR_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${BUILD_NUMBER}" >> $GITHUB_ENV
-          echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${BUILD_NUMBER}"
+          # Use GitHub run number as 4th component (always within TFX 32-bit integer limit)
+          echo "PR_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}" >> $GITHUB_ENV
+          echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}"
 
       - name: Replace tokens in task.json
         uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
