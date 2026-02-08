@@ -4,7 +4,11 @@ This document explains the versioning strategy used for the MegaLinter Azure Dev
 
 ## Overview
 
-The extension uses an automatic versioning approach where each merge to main increments the version and publishes both private and public extensions.
+The extension uses an automatic versioning approach:
+- **PR builds**: Use 4-component versions (e.g., 1.1.7.123) for preview testing
+- **Main branch builds**: Use 3-component versions (e.g., 1.1.7) for official releases
+
+Each merge to main automatically increments the version and publishes both private and public extensions.
 
 ## Versioning Modes
 
