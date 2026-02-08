@@ -38,6 +38,14 @@ jobs:
         run: npm run lint
 
       - name: Run unit tests
+        timeout-minutes: 2
+        env:
+          INPUT_SAMPLEINPUT: "test-value"
+          INPUT_FLAVOR: "all"
+          INPUT_RELEASE: "latest"
+          INPUT_FIX: "false"
+          INPUT_CREATEFIXPR: "false"
+          INPUT_ENABLEPRCOMMENTS: "false"
         run: npx --no-install cucumber-js megalinter/features/*.feature --require 'megalinter/features/step_definitions/*.js'
 
       - name: Build TypeScript
