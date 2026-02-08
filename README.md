@@ -202,7 +202,7 @@ The **PR Code Validation and Publish Private Extension** workflow (`.github/work
    - Setting up Node.js runtime
    - Installing dependencies
    - Running linters (`npm run lint`)
-   - Executing unit tests (`npm test`)
+   - Executing Cucumber BDD tests (`npx --no-install cucumber-js`, instead of `npm test` to avoid the `posttest` coverage loop in CI)
    - Building the TypeScript code (`npm run build`)
 
 2. **Publishing a private extension:**

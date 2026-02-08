@@ -38,7 +38,7 @@ jobs:
         run: npm run lint
 
       - name: Run unit tests
-        run: npx --no-install cucumber-js
+        run: npx --no-install cucumber-js megalinter/features/*.feature --require 'megalinter/features/step_definitions/*.js'
 
       - name: Build TypeScript
         run: npm run build
@@ -48,8 +48,9 @@ jobs:
     name: Publish Private Extension
     runs-on: ubuntu-latest
     needs: build-and-test
-    # Only run if PR is mergeable
-    if: ${{ github.event.pull_request.mergeable != false }}
+    # Only run if PR is mergeable and from the same repository (not a fork)
+    # This prevents exposing secrets to untrusted PR code
+    if: ${{ github.event.pull_request.mergeable == true && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -125,5 +126,7 @@ jobs:
         run: tfx extension create --manifest-globs vss-extension.json --output-path ./private-extension.vsix
 
       - name: Publish private extension
+        env:
+          AZURE_DEVOPS_EXT_PAT: ${{ secrets.ADO_SERVICE_CONNECTION }}
         run: |
-          tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token ${{ secrets.ADO_SERVICE_CONNECTION }} --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
+          tfx extension publish --vsix ./private-extension.vsix --override '{"public": false}' --service-url https://marketplace.visualstudio.com --token "${AZURE_DEVOPS_EXT_PAT}" --share-with ${{ secrets.AZURE_DEVOPS_ORGS }}
