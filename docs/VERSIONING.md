@@ -4,7 +4,7 @@ This document explains the versioning strategy used for the MegaLinter Azure Dev
 
 ## Overview
 
-The extension uses a dual versioning approach to balance the need for unique versions in development while preventing gaps in published release versions.
+The extension uses an automatic versioning approach where each merge to main increments the version and publishes both private and public extensions.
 
 ## Versioning Modes
 
@@ -18,66 +18,51 @@ When a pull request is created or updated:
 
 The 4th component (RunNumber) ensures each PR build gets a unique version without consuming official version numbers.
 
-### 2. Main Branch Automatic Builds (Private Extensions)
+### 2. Main Branch Automatic Builds (Public & Private Extensions)
 
 When code is merged to main (automatic trigger):
-- **Version Format**: `Major.Minor.Patch.RunNumber` (4 components)
-- **Example**: `1.1.7.456`
-- **Purpose**: Creates preview versions for internal testing
-- **Published**: Private extension only
-
-These builds are for validation before deciding to create a public release.
-
-### 3. Public Releases (Manual)
-
-When a public release is triggered manually via `workflow_dispatch`:
 - **Version Format**: `Major.Minor.Patch` (3 components)
 - **Example**: `1.1.7`
-- **Purpose**: Stable, official release version
-- **Published**: Public extension on Azure DevOps Marketplace
+- **Purpose**: Official release version
+- **Published**: Both private AND public extensions on Azure DevOps Marketplace
 - **Tagged**: A git tag (e.g., `v1.1.7`) is created after successful publish
+
+Each merge to main automatically increments the patch version and creates a public release.
 
 ## Benefits
 
-### No Version Gaps
+### Automatic Public Releases
 
-With the previous ContinuousDeployment mode, every commit to main would increment the patch version:
-- Commit 1: v1.1.7
-- Commit 2: v1.1.8
-- Commit 3: v1.1.9
-- Public Release: v1.1.9 (gaps: 1.1.7, 1.1.8 never publicly released)
-
-With the new ContinuousDelivery mode:
-- All commits before tagging: v1.1.7.X (preview builds)
-- First public release: v1.1.7 (tagged)
-- Future commits: v1.1.8.X (preview builds)
-- Second public release: v1.1.8 (tagged)
-- **Result**: No gaps in public version numbers!
+With ContinuousDeployment mode, every commit to main creates a public release:
+- Commit 1 → v1.1.7 (public release)
+- Commit 2 → v1.1.8 (public release)
+- Commit 3 → v1.1.9 (public release)
+- **Result**: Every merge to main is immediately available publicly
 
 ### Unique Preview Versions
 
-Each workflow run gets a unique version number using the GitHub run number as the 4th component. This ensures:
+PR builds get unique version numbers using the GitHub run number as the 4th component:
 - No conflicts when publishing to Azure DevOps
-- Clear distinction between preview and release builds
+- Clear distinction between PR preview and main release builds
 - Easy identification of which CI run produced a build
 
 ## GitVersion Configuration
 
-The project uses GitVersion in **ContinuousDelivery** mode:
+The project uses GitVersion in **ContinuousDeployment** mode:
 
 ```yaml
-mode: ContinuousDelivery
+mode: ContinuousDeployment
 branches:
   main:
-    mode: ContinuousDelivery
-    is-release-branch: true
+    mode: ContinuousDeployment
+    is-release-branch: false
 ```
 
 ### Key Settings
 
-- `mode: ContinuousDelivery`: Versions only increment when tags are created
-- `is-release-branch: true`: Marks main as a release branch
-- `continuous-delivery-fallback-tag: ci`: Fallback tag for pre-release builds
+- `mode: ContinuousDeployment`: Versions increment with each commit to main
+- `is-release-branch: false`: Standard deployment branch
+- Versions are tagged after successful public release
 
 ## Workflow Triggers
 
@@ -103,29 +88,28 @@ on:
   workflow_dispatch:
 ```
 
-**What happens on push**:
-1. GitVersion determines base version
-2. Adds GitHub run number as 4th component
-3. Publishes private extension with version 1.1.7.{run_number}
-4. Skips public release
-
-**What happens on workflow_dispatch**:
-1. GitVersion determines base version
-2. Uses 3-component version (e.g., 1.1.7)
+**What happens on push to main**:
+1. GitVersion increments patch version automatically
+2. Builds with 3-component version (e.g., 1.1.7)
 3. Publishes private extension with version 1.1.7
 4. Publishes public extension with version 1.1.7
 5. Creates git tag v1.1.7
 6. Creates GitHub release
 
-## How to Create a Release
+**What happens on workflow_dispatch**:
+Same as push to main - allows manual triggering if needed.
 
-1. Ensure all desired changes are merged to `main`
-2. Go to GitHub Actions
-3. Select "Build and release extension" workflow
-4. Click "Run workflow" → "Run workflow" (manual trigger)
-5. Wait for the workflow to complete
-6. Verify the public extension is published
-7. Check that a new git tag and GitHub release were created
+## How Releases Work
+
+Every merge to `main` automatically:
+1. Increments the version number
+2. Builds the extension
+3. Publishes to the private marketplace (for testing)
+4. Publishes to the public marketplace
+5. Creates a git tag
+6. Creates a GitHub release
+
+No manual intervention required!
 
 ## Version Incrementing
 
@@ -143,7 +127,7 @@ feat: Add new Docker caching feature
 +semver: minor
 ```
 
-This would increment from v1.1.7 to v1.2.0 on the next tagged release.
+This would increment from v1.1.7 to v1.2.0 on the next merge to main.
 
 ## Azure DevOps Version Constraints
 

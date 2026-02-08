@@ -37,17 +37,11 @@ jobs:
         with:
           configFilePath: GitVersion.yml
 
-      - name: Set version based on trigger type
+      - name: Set extension version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # For manual releases, use 3-component version
-            echo "EXTENSION_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> $GITHUB_ENV
-            echo "Building release version: ${{ env.GitVersion_MajorMinorPatch }}"
-          else
-            # For automatic builds, use 4-component version with build number
-            echo "EXTENSION_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}" >> $GITHUB_ENV
-            echo "Building preview version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}"
-          fi
+          # Use 3-component version for all builds from main
+          echo "EXTENSION_VERSION=${{ env.GitVersion_MajorMinorPatch }}" >> $GITHUB_ENV
+          echo "Building version: ${{ env.GitVersion_MajorMinorPatch }}"
 
       - name: Replace token in task.json
         uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
@@ -247,8 +241,8 @@ jobs:
   public_release:
     runs-on: ubuntu-latest
     needs: [build, scan]
-    # Only run public release on manual workflow dispatch
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.build.result == 'success' }}
+    # Run public release automatically on push to main
+    if: ${{ always() && needs.build.result == 'success' }}
     steps:
       - name: Checkout main repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
