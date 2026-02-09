@@ -39,10 +39,14 @@ jobs:
 
       - name: Set extension version
         run: |
-          # Use a 4-component, monotonically increasing version for all builds from main
-          EXT_VERSION="${{ env.GitVersion_MajorMinorPatch }}.${{ env.GitVersion_CommitsSinceVersionSource }}"
-          echo "EXTENSION_VERSION=$EXT_VERSION" >> "$GITHUB_ENV"
-          echo "Building version: $EXT_VERSION"
+          # Use epoch minutes for private extension builds to maintain monotonic increase
+          # and compatibility with PR builds (which also use epoch minutes).
+          # Both PR and main branch builds publish to the same PRIVATE_EXTENSIONID,
+          # so they must use the same versioning scheme to avoid conflicts.
+          EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
+          PRIVATE_EXT_VERSION="${{ env.GitVersion_MajorMinorPatch }}.${EPOCH_MINUTES}"
+          echo "PRIVATE_EXTENSION_VERSION=$PRIVATE_EXT_VERSION" >> "$GITHUB_ENV"
+          echo "Building private extension version: $PRIVATE_EXT_VERSION"
 
       - name: Replace token in task.json
         uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
@@ -73,7 +77,7 @@ jobs:
           publisherId: ${{ secrets.PUBLISHERID }}
           task_id: ${{ secrets.TASK_ID }}
           task_name: ${{ secrets.TASK_NAME }}
-          version: ${{ env.EXTENSION_VERSION }}
+          version: ${{ env.PRIVATE_EXTENSION_VERSION }}
 
       - name: Install Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6

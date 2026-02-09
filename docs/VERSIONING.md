@@ -8,7 +8,7 @@ The extension uses an automatic versioning approach:
 
 - **PR builds**: Use 4-component versions (e.g., 1.1.7.29547613) for preview testing
 - **Main branch builds**: 
-  - Private extension: 4-component version (e.g., 1.1.7.5)
+  - Private extension: 4-component version (e.g., 1.1.7.29547650) using epoch minutes
   - Public extension: 3-component version (e.g., 1.1.7)
   - Git tags: 3-component version with v prefix (e.g., v1.1.7)
 
@@ -39,9 +39,10 @@ The 4th component is **epoch minutes** — the number of minutes since January 1
 When code is merged to main (automatic trigger):
 
 #### Private Extension (Internal Testing)
-- **Version Format**: `Major.Minor.Patch.CommitsSinceVersion` (4 components)
-- **Example**: `1.1.7.5`
+- **Version Format**: `Major.Minor.Patch.EpochMinutes` (4 components)
+- **Example**: `1.1.7.29547613`
 - **Purpose**: Preview build with monotonically increasing 4th component
+- **Note**: Uses epoch minutes (same as PR builds) to ensure monotonic versioning since both PR and main branch builds publish to the same private extension ID
 
 #### Public Extension (Official Release)
 - **Version Format**: `Major.Minor.Patch` (3 components)
@@ -122,7 +123,7 @@ on:
 
 1. GitVersion increments patch version automatically
 2. Builds extension with dual versioning:
-   - Private extension: 4-component version (e.g., 1.1.8.5) using `CommitsSinceVersionSource`
+   - Private extension: 4-component version (e.g., 1.1.8.29547650) using epoch minutes
    - Public extension: 3-component version (e.g., 1.1.8)
 3. Publishes private extension with 4-component version
 4. Publishes public extension with 3-component version
@@ -138,7 +139,7 @@ Every merge to `main` automatically:
 
 1. Increments the version number
 2. Builds the extension with dual versioning:
-   - Private: 4-component (e.g., 1.1.8.5)
+   - Private: 4-component (e.g., 1.1.8.29547650) using epoch minutes
    - Public: 3-component (e.g., 1.1.8)
 3. Publishes private extension (4-component version for internal testing)
 4. Publishes public extension (3-component version for production)
