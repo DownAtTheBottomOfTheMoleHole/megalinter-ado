@@ -78,6 +78,7 @@ jobs:
 
       - name: Set PR version with build number
         run: |
+          # Use GitHub run number as 4th component (always within TFX 32-bit integer limit)
           echo "PR_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}" >> $GITHUB_ENV
           echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${{ github.run_number }}"
 
