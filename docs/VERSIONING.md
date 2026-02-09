@@ -25,14 +25,14 @@ When a pull request is created or updated:
 - **Purpose**: Creates unique preview versions for testing
 - **Published**: Private extension only (shared with configured orgs)
 
-The 4th component is **epoch minutes** — the number of minutes since January 1, 1970 UTC (Unix epoch). This ensures each workflow run gets a unique, monotonically increasing version that always stays within the TFX CLI's version component limit (0-2,147,483,647).
+The 4th component is **epoch minutes** — the number of minutes since January 1, 1970 UTC (Unix epoch). This provides a monotonically increasing version that always stays within the TFX CLI's version component limit (0-2,147,483,647). Collisions are only possible if multiple PR runs start within the same minute, which is extremely rare in practice.
 
 **Why epoch minutes?**
 - Always monotonically increasing (newer builds always have higher version numbers)
 - Current value is ~29.5 million, well under the ~2.1 billion maximum
-- Guaranteed unique per minute (sufficient granularity for PR builds)
+- Provides sufficiently fine granularity for typical PR build frequency (collisions are only possible if multiple runs start within the same minute, which is rare in practice)
 - Won't exceed the 32-bit integer limit for thousands of years
-- More reliable than `github.run_number` which can decrease when PR numbers are lower than release numbers
+- Preferred over `github.run_number` because it is workflow-agnostic and continues to increase even if workflows are renamed or recreated, making it more suitable as a long-term version component
 
 ### 2. Main Branch Automatic Builds (Public & Private Extensions)
 

@@ -81,6 +81,8 @@ jobs:
           # Use epoch minutes (minutes since 1970-01-01 UTC) as a monotonically increasing
           # build number that stays within TFX CLI's 0-2147483647 range per version component.
           # Current value is ~29.5 million, well under the ~2.1 billion max.
+          # Note: Collision risk exists if multiple PR runs start within the same minute,
+          # but this is extremely rare in practice. If a collision occurs, retry the workflow.
           EPOCH_MINUTES=$(( $(date -u +%s) / 60 ))
           echo "PR_VERSION=${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${EPOCH_MINUTES}" >> $GITHUB_ENV
           echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${EPOCH_MINUTES}"
