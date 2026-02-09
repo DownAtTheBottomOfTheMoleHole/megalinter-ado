@@ -7,7 +7,10 @@ This document explains the versioning strategy used for the MegaLinter Azure Dev
 The extension uses an automatic versioning approach:
 
 - **PR builds**: Use 4-component versions (e.g., 1.1.7.123) for preview testing
-- **Main branch builds**: Use 3-component versions (e.g., 1.1.7) for official releases
+- **Main branch builds**: 
+  - Private extension: 4-component version (e.g., 1.1.7.5)
+  - Public extension: 3-component version (e.g., 1.1.7)
+  - Git tags: 3-component version with v prefix (e.g., v1.1.7)
 
 Each merge to main automatically increments the version and publishes both private and public extensions.
 
@@ -17,24 +20,34 @@ Each merge to main automatically increments the version and publishes both priva
 
 When a pull request is created or updated:
 
-- **Version Format**: `Major.Minor.Patch.Timestamp` (4 components)
-- **Example**: `1.1.7.202602082130`
+- **Version Format**: `Major.Minor.Patch.RunNumber` (4 components)
+- **Example**: `1.1.7.123`
 - **Purpose**: Creates unique preview versions for testing
 - **Published**: Private extension only (shared with configured orgs)
 
-The 4th component (Timestamp in YYYYMMDDHHMM format) ensures each PR build gets a unique, monotonically increasing version without conflicts in stacked PRs.
+The 4th component (`github.run_number`) ensures each workflow run gets a unique, auto-incrementing version. This value is always within the TFX CLI's version component limit (0-2147483647).
+
+**Note**: `github.run_number` is tied to the workflow run, not individual attempts. Re-running the same workflow run (via "Re-run jobs") will use the same version number. For a new version, trigger a fresh workflow run by pushing a new commit or closing/reopening the PR.
 
 ### 2. Main Branch Automatic Builds (Public & Private Extensions)
 
 When code is merged to main (automatic trigger):
 
+#### Private Extension (Internal Testing)
+- **Version Format**: `Major.Minor.Patch.CommitsSinceVersion` (4 components)
+- **Example**: `1.1.7.5`
+- **Purpose**: Preview build with monotonically increasing 4th component
+
+#### Public Extension (Official Release)
 - **Version Format**: `Major.Minor.Patch` (3 components)
 - **Example**: `1.1.7`
 - **Purpose**: Official release version
-- **Published**: Both private AND public extensions on Azure DevOps Marketplace
+- **Published**: Azure DevOps Marketplace (public)
 - **Tagged**: A git tag (e.g., `v1.1.7`) is created after successful publish
 
-Each merge to main automatically increments the patch version and creates a public release.
+The 4th component for private builds (`GitVersion_CommitsSinceVersionSource`) represents the number of commits since the last version tag, ensuring monotonically increasing versions for internal testing.
+
+Each merge to main automatically increments the patch version and creates both a private preview and a public release.
 
 ## Benefits
 
@@ -49,12 +62,12 @@ With ContinuousDeployment mode, every commit to main creates a public release:
 
 ### Unique Preview Versions
 
-PR builds get unique version numbers using a timestamp as the 4th component:
+PR builds get unique version numbers using `github.run_number` as the 4th component:
 
-- No conflicts when publishing to Azure DevOps (monotonically increasing)
-- Works correctly with stacked PRs (no version rollback issues)
+- No conflicts when publishing to Azure DevOps (auto-incrementing)
+- Works correctly with most PR workflows
 - Clear distinction between PR preview and main release builds
-- Timestamp format (YYYYMMDDHHMM) ensures versions always increase
+- Always within TFX CLI's 32-bit integer limit (0-2147483647)
 
 ## GitVersion Configuration
 
@@ -87,8 +100,8 @@ on:
 **What happens**:
 
 1. GitVersion determines base version (e.g., 1.1.7)
-2. Adds timestamp as 4th component (e.g., 202602082130)
-3. Publishes private extension with version 1.1.7.{timestamp}
+2. Adds GitHub run number as 4th component (e.g., 123)
+3. Publishes private extension with version 1.1.7.123
 
 ### Build and Release Workflow
 
@@ -102,9 +115,11 @@ on:
 **What happens on push to main**:
 
 1. GitVersion increments patch version automatically
-2. Builds with 3-component version (e.g., 1.1.8)
-3. Publishes private extension with version 1.1.8
-4. Publishes public extension with version 1.1.8
+2. Builds extension with dual versioning:
+   - Private extension: 4-component version (e.g., 1.1.8.5) using `CommitsSinceVersionSource`
+   - Public extension: 3-component version (e.g., 1.1.8)
+3. Publishes private extension with 4-component version
+4. Publishes public extension with 3-component version
 5. Creates git tag v1.1.8
 6. Creates GitHub release
 
@@ -116,10 +131,12 @@ Same as push to main - allows manual triggering if needed.
 Every merge to `main` automatically:
 
 1. Increments the version number
-2. Builds the extension
-3. Publishes to the private marketplace (for testing)
-4. Publishes to the public marketplace
-5. Creates a git tag
+2. Builds the extension with dual versioning:
+   - Private: 4-component (e.g., 1.1.8.5)
+   - Public: 3-component (e.g., 1.1.8)
+3. Publishes private extension (4-component version for internal testing)
+4. Publishes public extension (3-component version for production)
+5. Creates a git tag (3-component with v prefix, e.g., v1.1.8)
 6. Creates a GitHub release
 
 No manual intervention required!
@@ -146,6 +163,15 @@ This would increment from v1.1.7 to v1.2.0 on the next merge to main.
 ## Azure DevOps Version Constraints
 
 Azure DevOps has different version requirements for different components:
+
+### TFX CLI Version Component Limits
+
+**Each version component must be in the range 0 to 2,147,483,647** (32-bit signed integer maximum).
+
+- ✅ Valid: `1.0.0`, `1.0.0.123`, `1.2.3.999999`
+- ❌ Invalid: `1.0.0.202602082217` (exceeds 2,147,483,647)
+
+This is why PR builds use `github.run_number` (small auto-incrementing integer) rather than timestamps.
 
 ### Extension Manifest (vss-extension.json)
 
