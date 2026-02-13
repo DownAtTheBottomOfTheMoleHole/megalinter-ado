@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PR comment reporter for Azure DevOps pull requests
 - Auto-fix PR creation when `fix: true` and `createFixPR: true`
-- Docker image caching for faster pipeline runs
+- Built-in Docker image caching via `cacheDockerImage` and `dockerCachePath` inputs (auto `docker load`/`docker save`)
 - Streaming output for real-time linting feedback
 - Configuration file support (`configFile` input)
 - Reports output path configuration (`reportsPath` input)
