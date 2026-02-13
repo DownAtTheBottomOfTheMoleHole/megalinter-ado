@@ -150,6 +150,14 @@
       "name": "dockerCachePath",
       "required": false,
       "type": "filePath"
+    },
+    {
+      "defaultValue": "false",
+      "helpMarkDown": "Only lint files that have changed in the current pull request or commit. Useful for faster feedback on PRs. Requires the repository to have git history available (use 'fetchDepth: 0' in checkout task).",
+      "label": "Lint Changed Files Only",
+      "name": "lintChangedFilesOnly",
+      "required": false,
+      "type": "boolean"
     }
   ],
   "instanceNameFormat": "Run Mega-Linter",
