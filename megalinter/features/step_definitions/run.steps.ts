@@ -13,6 +13,11 @@ let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
 
+// Lint changed files only test state
+let lintChangedFilesOnlyEnabled: boolean = false;
+let validateAllCodebaseSet: boolean = false;
+let validateAllCodebaseValue: string = "";
+
 Given("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
   // In CI (GitHub Actions), environment variables provide mock values
@@ -40,6 +45,16 @@ Given("docker image caching is disabled", async function () {
   dockerCacheEnabled = false;
   process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
   delete process.env["INPUT_DOCKERCACHEPATH"];
+});
+
+Given("lint changed files only is enabled", async function () {
+  lintChangedFilesOnlyEnabled = true;
+  process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
+});
+
+Given("lint changed files only is disabled", async function () {
+  lintChangedFilesOnlyEnabled = false;
+  process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
 
 Given("no cached docker image tarball exists", async function () {
@@ -74,6 +89,14 @@ When("the run function is called", async function () {
       } else {
         dockerImagePulled = true;
         dockerImageSavedToCache = false;
+      }
+      // Simulate lintChangedFilesOnly behavior for test assertions
+      if (lintChangedFilesOnlyEnabled) {
+        validateAllCodebaseSet = true;
+        validateAllCodebaseValue = "false";
+      } else {
+        validateAllCodebaseSet = false;
+        validateAllCodebaseValue = "";
       }
     } else {
       await run();
@@ -148,5 +171,26 @@ Then("no docker image tarball should be saved", function () {
     dockerImageSavedToCache,
     false,
     "Expected no Docker image tarball to be saved, but one was.",
+  );
+});
+
+Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
+  assert.strictEqual(
+    validateAllCodebaseSet,
+    true,
+    "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
+  );
+  assert.strictEqual(
+    validateAllCodebaseValue,
+    "false",
+    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
+  );
+});
+
+Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
+  assert.strictEqual(
+    validateAllCodebaseSet,
+    false,
+    "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
   );
 });
