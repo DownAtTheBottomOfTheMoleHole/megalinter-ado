@@ -491,6 +491,15 @@ export async function run(): Promise<void> {
       execEnv["DISABLE_LINTERS"] = disableLinters;
     }
 
+    // Enable linting only changed files
+    const lintChangedFilesOnly = tl.getBoolInput("lintChangedFilesOnly");
+    if (lintChangedFilesOnly) {
+      console.log(
+        "Linting changed files only - VALIDATE_ALL_CODEBASE will be set to false",
+      );
+      execEnv["VALIDATE_ALL_CODEBASE"] = "false";
+    }
+
     // Use async exec for real-time streaming output
     const npxTool = tl.tool("npx");
     npxTool.arg([npxPackage, ...args]);
