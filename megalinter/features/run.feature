@@ -37,3 +37,13 @@ Feature: Run function
     When the run function is called
     Then the docker image should be pulled
     And no docker image tarball should be saved
+
+  Scenario: Lint changed files only enabled
+    Given lint changed files only is enabled
+    When the run function is called
+    Then VALIDATE_ALL_CODEBASE environment variable should be set to false
+
+  Scenario: Lint changed files only disabled
+    Given lint changed files only is disabled
+    When the run function is called
+    Then VALIDATE_ALL_CODEBASE environment variable should not be set
