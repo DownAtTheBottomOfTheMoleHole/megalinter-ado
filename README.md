@@ -38,18 +38,18 @@ Configure MegaLinter using the Azure DevOps task assistant:
 
 ## Task Inputs
 
-| Input                 | Description                                                 | Default                                |
-| --------------------- | ----------------------------------------------------------- | -------------------------------------- |
-| `flavor`              | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                                  |
-| `release`             | Docker image tag (v9, latest, etc.)                         | `v9`                                   |
-| `fix`                 | Auto-fix issues                                             | `false`                                |
-| `enablePRComments`    | Post results as PR comments (auto-enabled for PR builds)    | `false`                                |
-| `createFixPR`         | Create PR with fixes (when fix=true)                        | `true`                                 |
-| `path`                | Directory to lint                                           | Pipeline workspace                     |
-| `configFile`          | Path to .mega-linter.yml                                    | Auto-detected                          |
-| `reportsPath`         | Reports output directory                                    | `megalinter-reports`                   |
-| `disableLinters`      | Comma-separated linters to disable                          | -                                      |
-| `lintChangedFilesOnly`| Only lint files changed in PR/commit                        | `false`                                |
+| Input                  | Description                                                 | Default              |
+| ---------------------- | ----------------------------------------------------------- | -------------------- |
+| `flavor`               | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
+| `release`              | Docker image tag (v9, latest, etc.)                         | `v9`                 |
+| `fix`                  | Auto-fix issues                                             | `false`              |
+| `enablePRComments`     | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
+| `createFixPR`          | Create PR with fixes (when fix=true)                        | `true`               |
+| `path`                 | Directory to lint                                           | Pipeline workspace   |
+| `configFile`           | Path to .mega-linter.yml                                    | Auto-detected        |
+| `reportsPath`          | Reports output directory                                    | `megalinter-reports` |
+| `disableLinters`       | Comma-separated linters to disable                          | -                    |
+| `lintChangedFilesOnly` | Only lint files changed in PR/commit                        | `false`              |
 
 See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 

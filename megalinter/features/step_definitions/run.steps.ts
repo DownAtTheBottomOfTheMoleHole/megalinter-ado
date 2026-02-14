@@ -1,7 +1,5 @@
 import { Given, When, Then, Before } from "@cucumber/cucumber";
-import assert from "assert";
-import * as tl from "azure-pipelines-task-lib/task";
-import { run } from "../../megalinter"; // Ensure this path is correct
+import * as assert from "assert";
 
 let result: string | null = null;
 let errorOccurred: boolean = false;
@@ -11,6 +9,9 @@ let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
+// Lazy import for run function - only imported if needed in Azure Pipelines
+let run: (() => Promise<void>) | null = null;
+
 // Reset state before each scenario
 Before(function () {
   result = null;
@@ -18,18 +19,17 @@ Before(function () {
   lintChangedFilesOnlyEnabled = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
+
+  // Clean up process.env to prevent order-dependent behavior
+  delete process.env["INPUT_LINTCHANGEDFILESONLY"];
+  delete process.env["VALIDATE_ALL_CODEBASE"];
 });
 
 Given("the input parameters are valid", async function () {
-  // Mock valid input parameters if necessary
-  // In CI (GitHub Actions), environment variables provide mock values
-  // In ADO, real values are provided
-  // Just verify we can get the input without error
-  try {
-    tl.getInput("sampleInput", false); // Don't require, just test
-  } catch {
-    // Expected in some environments, that's okay
-  }
+  // Test assumes valid inputs are available through environment variables
+  // In CI, the workflow sets INPUT_* environment variables
+  // We don't need to verify them here as the test is mocked in CI anyway
+  errorOccurred = false;
 });
 
 Given("the input parameters are invalid", async function () {
@@ -50,9 +50,12 @@ Given("lint changed files only is disabled", async function () {
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    // In CI, don't actually run the Docker command - just mock success
-    // In ADO with proper environment, this would run for real
-    if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    // Mock by default to avoid executing real Docker/npx commands outside Azure Pipelines
+    // Only run real task when explicitly in Azure DevOps (TF_BUILD is set)
+    const isAzurePipelines = !!process.env.TF_BUILD;
+
+    if (!isAzurePipelines) {
+      // Mocked behavior - simulate the task without executing real commands
       result = "success";
       // Simulate lintChangedFilesOnly behavior for test assertions
       if (lintChangedFilesOnlyEnabled) {
@@ -63,8 +66,26 @@ When("the run function is called", async function () {
         validateAllCodebaseValue = "";
       }
     } else {
-      await run();
+      // Only import and run in actual Azure DevOps environment
+      // Lazy load to avoid import errors in mocked environments
+      if (!run) {
+        const module = await import("../../megalinter");
+        run = module.run;
+      }
+      if (run) {
+        await run();
+      }
       result = "success";
+
+      // In non-mocked runs, read the actual environment set by run()
+      const validateAllCodebaseEnv = process.env.VALIDATE_ALL_CODEBASE;
+      if (typeof validateAllCodebaseEnv !== "undefined") {
+        validateAllCodebaseSet = true;
+        validateAllCodebaseValue = validateAllCodebaseEnv;
+      } else {
+        validateAllCodebaseSet = false;
+        validateAllCodebaseValue = "";
+      }
     }
   } catch (error) {
     if (error instanceof Error) result = error.message;
@@ -111,10 +132,13 @@ Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", functi
   );
 });
 
-Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    false,
-    "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should not be set",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      false,
+      "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+    );
+  },
+);

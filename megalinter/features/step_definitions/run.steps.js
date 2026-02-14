@@ -32,20 +32,17 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
-const assert_1 = __importDefault(require("assert"));
-const tl = __importStar(require("azure-pipelines-task-lib/task"));
-const megalinter_1 = require("../../megalinter"); // Ensure this path is correct
+const assert = __importStar(require("assert"));
 let result = null;
 let errorOccurred = false;
 // Lint changed files only test state
 let lintChangedFilesOnlyEnabled = false;
 let validateAllCodebaseSet = false;
 let validateAllCodebaseValue = "";
+// Lazy import for run function - only imported if needed in Azure Pipelines
+let run = null;
 // Reset state before each scenario
 (0, cucumber_1.Before)(function () {
     result = null;
@@ -53,18 +50,15 @@ let validateAllCodebaseValue = "";
     lintChangedFilesOnlyEnabled = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
+    // Clean up process.env to prevent order-dependent behavior
+    delete process.env["INPUT_LINTCHANGEDFILESONLY"];
+    delete process.env["VALIDATE_ALL_CODEBASE"];
 });
 (0, cucumber_1.Given)("the input parameters are valid", async function () {
-    // Mock valid input parameters if necessary
-    // In CI (GitHub Actions), environment variables provide mock values
-    // In ADO, real values are provided
-    // Just verify we can get the input without error
-    try {
-        tl.getInput("sampleInput", false); // Don't require, just test
-    }
-    catch {
-        // Expected in some environments, that's okay
-    }
+    // Test assumes valid inputs are available through environment variables
+    // In CI, the workflow sets INPUT_* environment variables
+    // We don't need to verify them here as the test is mocked in CI anyway
+    errorOccurred = false;
 });
 (0, cucumber_1.Given)("the input parameters are invalid", async function () {
     // Mock invalid input parameters or set error flag directly
@@ -82,9 +76,11 @@ let validateAllCodebaseValue = "";
     try {
         if (errorOccurred)
             throw new Error("Test error");
-        // In CI, don't actually run the Docker command - just mock success
-        // In ADO with proper environment, this would run for real
-        if (process.env.CI || process.env.GITHUB_ACTIONS) {
+        // Mock by default to avoid executing real Docker/npx commands outside Azure Pipelines
+        // Only run real task when explicitly in Azure DevOps (TF_BUILD is set)
+        const isAzurePipelines = !!process.env.TF_BUILD;
+        if (!isAzurePipelines) {
+            // Mocked behavior - simulate the task without executing real commands
             result = "success";
             // Simulate lintChangedFilesOnly behavior for test assertions
             if (lintChangedFilesOnlyEnabled) {
@@ -97,8 +93,26 @@ let validateAllCodebaseValue = "";
             }
         }
         else {
-            await (0, megalinter_1.run)();
+            // Only import and run in actual Azure DevOps environment
+            // Lazy load to avoid import errors in mocked environments
+            if (!run) {
+                const module = await Promise.resolve().then(() => __importStar(require("../../megalinter")));
+                run = module.run;
+            }
+            if (run) {
+                await run();
+            }
             result = "success";
+            // In non-mocked runs, read the actual environment set by run()
+            const validateAllCodebaseEnv = process.env.VALIDATE_ALL_CODEBASE;
+            if (typeof validateAllCodebaseEnv !== "undefined") {
+                validateAllCodebaseSet = true;
+                validateAllCodebaseValue = validateAllCodebaseEnv;
+            }
+            else {
+                validateAllCodebaseSet = false;
+                validateAllCodebaseValue = "";
+            }
         }
     }
     catch (error) {
@@ -121,15 +135,15 @@ let validateAllCodebaseValue = "";
     }
 });
 (0, cucumber_1.Then)("the function should execute successfully", function () {
-    assert_1.default.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
+    assert.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
 });
 (0, cucumber_1.Then)("the function should fail with an error message", function () {
-    assert_1.default.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
+    assert.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-    assert_1.default.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
-    assert_1.default.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
+    assert.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
+    assert.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-    assert_1.default.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
+    assert.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
 });
