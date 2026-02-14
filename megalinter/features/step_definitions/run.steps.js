@@ -61,6 +61,9 @@ let _setResultStub;
 let _getInputStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _getBoolInputStub;
+let _existStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _getVariableStub;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions = null;
 (0, cucumber_1.Before)(function () {
@@ -75,6 +78,10 @@ let capturedExecOptions = null;
         const envKey = `INPUT_${name.toUpperCase()}`;
         return process.env[envKey]?.toUpperCase() === "TRUE";
     });
+    // Stub getVariable to return undefined by default (can be overridden in scenarios)
+    _getVariableStub = sinon.stub(tl, "getVariable").returns(undefined);
+    // Stub exist to return false by default (can be overridden in scenarios)
+    _existStub = sinon.stub(tl, "exist").returns(false);
     // Set required environment variables for tests
     process.env["INPUT_FLAVOR"] = "all";
     process.env["INPUT_RELEASE"] = "latest";
@@ -83,29 +90,66 @@ let capturedExecOptions = null;
     process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
     // Create stubs for tl methods
     _setResultStub = sinon.stub(tl, "setResult");
-    _execSyncStub = sinon.stub(tl, "execSync").returns({
-        code: 0,
-        stdout: "",
-        stderr: ""
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    });
-    // Create a mock tool runner
-    const mockToolRunner = {
-        arg: sinon.stub().returnsThis(),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        exec: sinon.stub().callsFake(async (options) => {
-            // Capture the exec options (including env) for assertions
-            capturedExecOptions = options;
-            return 0; // Success exit code
-        })
-    };
+    // Stub execSync to return different values based on command
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    _toolStub = sinon.stub(tl, "tool").returns(mockToolRunner);
+    _execSyncStub = sinon.stub(tl, "execSync").callsFake((tool, args) => {
+        // Check if this is a "docker images -q" command
+        if (tool === "docker" && Array.isArray(args) && args.includes("images") && args.includes("-q")) {
+            // Return image ID if cache exists (configured by Given steps), empty otherwise
+            return {
+                code: 0,
+                stdout: _existStub() ? "mock-image-id-12345\n" : "",
+                stderr: ""
+            };
+        }
+        // Default: return success with empty output
+        return {
+            code: 0,
+            stdout: "",
+            stderr: ""
+        };
+    });
+    // Create a factory for mock tool runners
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _toolStub = sinon.stub(tl, "tool").callsFake((tool) => {
+        const mockToolRunner = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            arg: sinon.stub().callsFake((args) => {
+                // Track docker operations
+                if (tool === "docker" && Array.isArray(args)) {
+                    if (args.includes("load")) {
+                        dockerImageLoadedFromCache = true;
+                    }
+                    else if (args.includes("save")) {
+                        dockerImageSavedToCache = true;
+                    }
+                    else if (args.includes("pull")) {
+                        dockerImagePulled = true;
+                    }
+                }
+                return mockToolRunner;
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            exec: sinon.stub().callsFake(async (options) => {
+                // Capture exec options only for npx tool (the main MegaLinter execution)
+                if (tool === "npx") {
+                    capturedExecOptions = options;
+                }
+                return 0; // Success exit code
+            })
+        };
+        return mockToolRunner;
+    });
 });
 (0, cucumber_1.After)(function () {
     // Restore all stubs after each scenario
     sinon.restore();
-    // Clean up environment variables
+    // Clean up all environment variables set in Before hook and scenarios
+    delete process.env["INPUT_FLAVOR"];
+    delete process.env["INPUT_RELEASE"];
+    delete process.env["INPUT_FIX"];
+    delete process.env["INPUT_CREATEFIXPR"];
+    delete process.env["INPUT_ENABLEPRCOMMENTS"];
     delete process.env["INPUT_LINTCHANGEDFILESONLY"];
     delete process.env["INPUT_CACHEDOCKERIMAGE"];
     delete process.env["INPUT_DOCKERCACHEPATH"];
@@ -150,13 +194,12 @@ let capturedExecOptions = null;
     process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
 (0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
-    // Ensure the cache directory/file does not exist for the test
-    // Docker caching tests still use simulation approach
+    // Configure exist stub to return false (tarball doesn't exist)
+    _existStub.returns(false);
 });
 (0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
-    // In a real test environment, a mock tarball would be placed at the cache path
-    // For CI testing, we simulate the behavior
-    // Docker caching tests still use simulation approach
+    // Configure exist stub to return true (tarball exists)
+    _existStub.returns(true);
 });
 (0, cucumber_1.When)("the run function is called", async function () {
     try {
