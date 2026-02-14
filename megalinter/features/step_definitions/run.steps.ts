@@ -7,25 +7,27 @@ import { run } from "../../megalinter"; // Ensure this path is correct
 let result: string | null = null;
 let errorOccurred: boolean = false;
 
-// Docker caching test state
-let dockerCacheEnabled: boolean = false;
-let dockerCacheTarballExists: boolean = false;
+// Lint changed files only test state
+let validateAllCodebaseSet: boolean = false;
+let validateAllCodebaseValue: string = "";
+
+// Docker caching test state (for old simulation-based tests)
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
 
-// Lint changed files only test state
-let lintChangedFilesOnlyEnabled: boolean = false;
-let validateAllCodebaseSet: boolean = false;
-let validateAllCodebaseValue: string = "";
-
-// Sinon stubs for mocking
-let toolStub: sinon.SinonStub;
-let execStub: sinon.SinonStub;
-let execSyncStub: sinon.SinonStub;
-let setResultStub: sinon.SinonStub;
-let getInputStub: sinon.SinonStub;
-let getBoolInputStub: sinon.SinonStub;
+// Sinon stubs for mocking (stored for cleanup via sinon.restore())
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _toolStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _execSyncStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _setResultStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _getInputStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let _getBoolInputStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions: any = null;
 
 // Mock tool runner interface
@@ -39,12 +41,12 @@ Before(function () {
   capturedExecOptions = null;
   
   // Stub getInput and getBoolInput to return test values
-  getInputStub = sinon.stub(tl, "getInput").callsFake((name: string) => {
+  _getInputStub = sinon.stub(tl, "getInput").callsFake((name: string) => {
     const envKey = `INPUT_${name.toUpperCase()}`;
     return process.env[envKey];
   });
   
-  getBoolInputStub = sinon.stub(tl, "getBoolInput").callsFake((name: string) => {
+  _getBoolInputStub = sinon.stub(tl, "getBoolInput").callsFake((name: string) => {
     const envKey = `INPUT_${name.toUpperCase()}`;
     return process.env[envKey]?.toUpperCase() === "TRUE";
   });
@@ -57,16 +59,18 @@ Before(function () {
   process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
   
   // Create stubs for tl methods
-  setResultStub = sinon.stub(tl, "setResult");
-  execSyncStub = sinon.stub(tl, "execSync").returns({ 
+  _setResultStub = sinon.stub(tl, "setResult");
+  _execSyncStub = sinon.stub(tl, "execSync").returns({ 
     code: 0, 
     stdout: "", 
     stderr: ""
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
   
   // Create a mock tool runner
   const mockToolRunner: MockToolRunner = {
     arg: sinon.stub().returnsThis(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     exec: sinon.stub().callsFake(async (options: any) => {
       // Capture the exec options (including env) for assertions
       capturedExecOptions = options;
@@ -74,7 +78,8 @@ Before(function () {
     })
   };
   
-  toolStub = sinon.stub(tl, "tool").returns(mockToolRunner as any);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  _toolStub = sinon.stub(tl, "tool").returns(mockToolRunner as any);
 });
 
 After(function () {
@@ -89,12 +94,9 @@ After(function () {
   // Reset state variables
   result = null;
   errorOccurred = false;
-  dockerCacheEnabled = false;
-  dockerCacheTarballExists = false;
   dockerImagePulled = false;
   dockerImageLoadedFromCache = false;
   dockerImageSavedToCache = false;
-  lintChangedFilesOnlyEnabled = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
   capturedExecOptions = null;
@@ -118,36 +120,32 @@ Given("the input parameters are invalid", async function () {
 });
 
 Given("docker image caching is enabled", async function () {
-  dockerCacheEnabled = true;
   process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
   process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
 });
 
 Given("docker image caching is disabled", async function () {
-  dockerCacheEnabled = false;
   process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
   delete process.env["INPUT_DOCKERCACHEPATH"];
 });
 
 Given("lint changed files only is enabled", async function () {
-  lintChangedFilesOnlyEnabled = true;
   process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
 });
 
 Given("lint changed files only is disabled", async function () {
-  lintChangedFilesOnlyEnabled = false;
   process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
 
 Given("no cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = false;
   // Ensure the cache directory/file does not exist for the test
+  // Docker caching tests still use simulation approach
 });
 
 Given("a cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = true;
   // In a real test environment, a mock tarball would be placed at the cache path
   // For CI testing, we simulate the behavior
+  // Docker caching tests still use simulation approach
 });
 
 When("the run function is called", async function () {
