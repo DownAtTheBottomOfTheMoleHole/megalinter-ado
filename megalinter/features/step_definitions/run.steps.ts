@@ -14,21 +14,16 @@ let toolStub: sinon.SinonStubbedInstance<any>;
 let execStub: sinon.SinonStub;
 let getInputStub: sinon.SinonStub;
 let getBoolInputStub: sinon.SinonStub;
+let existStub: sinon.SinonStub;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions: any = null;
 
-// Docker caching test state (not actively used but needed for compatibility with existing Given steps)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let dockerCacheEnabled: boolean = false;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let dockerCacheTarballExists: boolean = false;
+// Docker caching test state
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
 
 // Lint changed files only test state
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
@@ -52,7 +47,8 @@ Before(function () {
   sandbox.stub(tl, "setResult");
   sandbox.stub(tl, "getVariable").returns("");
   sandbox.stub(tl, "which").returns("/usr/bin/npx");
-  sandbox.stub(tl, "exist").returns(false); // No cached tarball by default
+  existStub = sandbox.stub(tl, "exist");
+  existStub.returns(false); // No cached tarball by default
   sandbox.stub(tl, "mkdirP"); // Stub directory creation
   sandbox.stub(tl, "execSync").returns({ 
     code: 0, 
@@ -77,12 +73,9 @@ Before(function () {
   // Reset test state
   result = null;
   errorOccurred = false;
-  dockerCacheEnabled = false;
-  dockerCacheTarballExists = false;
   dockerImagePulled = false;
   dockerImageLoadedFromCache = false;
   dockerImageSavedToCache = false;
-  lintChangedFilesOnlyEnabled = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
 });
@@ -109,38 +102,36 @@ Given("the input parameters are invalid", async function () {
 });
 
 Given("docker image caching is enabled", async function () {
-  dockerCacheEnabled = true;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
-  process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
+  // Configure the stub to return true for cacheDockerImage
+  getBoolInputStub.withArgs("cacheDockerImage").returns(true);
+  getInputStub.withArgs("dockerCachePath").returns("/tmp/test-docker-cache");
 });
 
 Given("docker image caching is disabled", async function () {
-  dockerCacheEnabled = false;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
-  delete process.env["INPUT_DOCKERCACHEPATH"];
+  // Configure the stub to return false for cacheDockerImage (already default)
+  getBoolInputStub.withArgs("cacheDockerImage").returns(false);
 });
 
 Given("lint changed files only is enabled", async function () {
-  lintChangedFilesOnlyEnabled = true;
   // Configure the stub to return true for lintChangedFilesOnly
   getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
 });
 
 Given("lint changed files only is disabled", async function () {
-  lintChangedFilesOnlyEnabled = false;
   // Configure the stub to return false for lintChangedFilesOnly (already default)
   getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
 });
 
 Given("no cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = false;
   // Ensure the cache directory/file does not exist for the test
+  // Reset the stub to return false (the default)
+  existStub.returns(false);
 });
 
 Given("a cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = true;
   // In a real test environment, a mock tarball would be placed at the cache path
-  // For CI testing, we simulate the behavior
+  // For testing, we stub tl.exist to return true
+  existStub.returns(true);
 });
 
 When("the run function is called", async function () {
