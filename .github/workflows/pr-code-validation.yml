@@ -46,7 +46,8 @@ jobs:
           INPUT_FIX: "false"
           INPUT_CREATEFIXPR: "false"
           INPUT_ENABLEPRCOMMENTS: "false"
-        run: npx --no-install cucumber-js megalinter/features/*.feature --require 'megalinter/features/step_definitions/*.js'
+        working-directory: megalinter
+        run: npx --no-install cucumber-js
 
       - name: Build TypeScript
         run: npm run build
