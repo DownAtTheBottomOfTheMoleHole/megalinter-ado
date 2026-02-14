@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configuration file support (`configFile` input)
 - Reports output path configuration (`reportsPath` input)
 - Disable specific linters via `disableLinters` input
+- Lint only changed files in PRs/commits via `lintChangedFilesOnly` input (sets `VALIDATE_ALL_CODEBASE=false`)
 
 ### Changed
 
