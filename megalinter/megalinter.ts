@@ -222,20 +222,18 @@ async function handleFixPullRequest(
     return;
   }
 
-  // Push the branch using the System.AccessToken via an HTTP header
-  // to avoid embedding the token in the remote URL or .git/config.
-  const extraHeader = `Authorization: Bearer ${accessToken}`;
+  // Push the branch using the System.AccessToken via environment variable
+  // to avoid leaking the token in command-line arguments or process listings
   const pushResult = tl.execSync(
     "git",
-    [
-      "-c",
-      `http.extraheader=${extraHeader}`,
-      "push",
-      "-u",
-      "origin",
-      fixBranchName,
-    ],
-    { cwd: workingDir },
+    ["push", "-u", "origin", fixBranchName],
+    {
+      cwd: workingDir,
+      env: {
+        ...process.env,
+        GIT_HTTP_EXTRAHEADER: `Authorization: Bearer ${accessToken}`,
+      },
+    },
   );
 
   if (pushResult.code !== 0) {
@@ -365,14 +363,8 @@ export async function run(): Promise<void> {
     const dockerCachePath =
       tl.getInput("dockerCachePath") ||
       `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
-    const flavorForCache = tl.getInput("flavor") || "default";
-    const releaseForCache = tl.getInput("release") || "latest";
-    const safeFlavorForCache = flavorForCache.replace(/[^a-zA-Z0-9_.-]/g, "_");
-    const safeReleaseForCache = releaseForCache.replace(
-      /[^a-zA-Z0-9_.-]/g,
-      "_",
-    );
-    const dockerCacheTarball = `${dockerCachePath}/megalinter-${safeFlavorForCache}-${safeReleaseForCache}.tar`;
+    // Use fixed tarball filename for backward compatibility with existing docs and pipelines
+    const dockerCacheTarball = `${dockerCachePath}/megalinter.tar`;
 
     // If caching is enabled, attempt to load the Docker image from a cached tarball
     if (cacheDockerImage) {
