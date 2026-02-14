@@ -32,12 +32,9 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
-const assert = require("assert");
+const assert = __importStar(require("assert"));
 let result = null;
 let errorOccurred = false;
 let isCI = false;
@@ -146,7 +143,7 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
             // Only import and run in actual Azure DevOps environment
             // Lazy load to avoid import errors in CI
             if (!run) {
-                const module = await Promise.resolve().then(() => require("../../megalinter"));
+                const module = await Promise.resolve().then(() => __importStar(require("../../megalinter")));
                 run = module.run;
             }
             if (run) {

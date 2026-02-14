@@ -1,10 +1,9 @@
-import { Given, When, Then } from "@cucumber/cucumber";
-import assert from "assert";
-import * as tl from "azure-pipelines-task-lib/task";
-import { run } from "../../megalinter"; // Ensure this path is correct
+import { Given, When, Then, Before } from "@cucumber/cucumber";
+import * as assert from "assert";
 
 let result: string | null = null;
 let errorOccurred: boolean = false;
+let isCI: boolean = false;
 
 // Docker caching test state
 let dockerCacheEnabled: boolean = false;
@@ -18,16 +17,33 @@ let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
+// Lazy import for run function - only imported if needed in non-CI environments
+let run: (() => Promise<void>) | null = null;
+
+// Initialize CI detection
+// GitHub Actions automatically sets GITHUB_ACTIONS=true
+// Set a flag at the start of test execution to avoid timeout issues
+isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
+
+// Reset state before each scenario
+Before(function () {
+  result = null;
+  errorOccurred = false;
+  dockerCacheEnabled = false;
+  dockerCacheTarballExists = false;
+  dockerImagePulled = false;
+  dockerImageLoadedFromCache = false;
+  dockerImageSavedToCache = false;
+  lintChangedFilesOnlyEnabled = false;
+  validateAllCodebaseSet = false;
+  validateAllCodebaseValue = "";
+});
+
 Given("the input parameters are valid", async function () {
-  // Mock valid input parameters if necessary
-  // In CI (GitHub Actions), environment variables provide mock values
-  // In ADO, real values are provided
-  // Just verify we can get the input without error
-  try {
-    tl.getInput("sampleInput", false); // Don't require, just test
-  } catch {
-    // Expected in some environments, that's okay
-  }
+  // Test assumes valid inputs are available through environment variables
+  // In CI, the workflow sets INPUT_* environment variables
+  // We don't need to verify them here as the test is mocked in CI anyway
+  errorOccurred = false;
 });
 
 Given("the input parameters are invalid", async function () {
@@ -71,9 +87,9 @@ Given("a cached docker image tarball exists", async function () {
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    // In CI, don't actually run the Docker command - just mock success
-    // In ADO with proper environment, this would run for real
-    if (process.env.CI || process.env.GITHUB_ACTIONS) {
+    // In CI environments (GitHub Actions, Jenkins, etc.), use mocked behavior
+    // This prevents attempts to execute Docker commands that would hang/timeout
+    if (isCI) {
       result = "success";
       // Simulate docker caching behavior for test assertions
       if (dockerCacheEnabled) {
@@ -99,7 +115,15 @@ When("the run function is called", async function () {
         validateAllCodebaseValue = "";
       }
     } else {
-      await run();
+      // Only import and run in actual Azure DevOps environment
+      // Lazy load to avoid import errors in CI
+      if (!run) {
+        const module = await import("../../megalinter");
+        run = module.run;
+      }
+      if (run) {
+        await run();
+      }
       result = "success";
     }
   } catch (error) {
