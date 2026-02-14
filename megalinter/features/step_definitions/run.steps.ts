@@ -1,5 +1,6 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import assert from "assert";
+import * as sinon from "sinon";
 import * as tl from "azure-pipelines-task-lib/task";
 import { run } from "../../megalinter"; // Ensure this path is correct
 
@@ -17,6 +18,87 @@ let dockerImageSavedToCache: boolean = false;
 let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
+
+// Sinon stubs for mocking
+let toolStub: sinon.SinonStub;
+let execStub: sinon.SinonStub;
+let execSyncStub: sinon.SinonStub;
+let setResultStub: sinon.SinonStub;
+let getInputStub: sinon.SinonStub;
+let getBoolInputStub: sinon.SinonStub;
+let capturedExecOptions: any = null;
+
+// Mock tool runner interface
+interface MockToolRunner {
+  arg: sinon.SinonStub;
+  exec: sinon.SinonStub;
+}
+
+Before(function () {
+  // Reset captured options before each scenario
+  capturedExecOptions = null;
+  
+  // Stub getInput and getBoolInput to return test values
+  getInputStub = sinon.stub(tl, "getInput").callsFake((name: string) => {
+    const envKey = `INPUT_${name.toUpperCase()}`;
+    return process.env[envKey];
+  });
+  
+  getBoolInputStub = sinon.stub(tl, "getBoolInput").callsFake((name: string) => {
+    const envKey = `INPUT_${name.toUpperCase()}`;
+    return process.env[envKey]?.toUpperCase() === "TRUE";
+  });
+  
+  // Set required environment variables for tests
+  process.env["INPUT_FLAVOR"] = "all";
+  process.env["INPUT_RELEASE"] = "latest";
+  process.env["INPUT_FIX"] = "false";
+  process.env["INPUT_CREATEFIXPR"] = "false";
+  process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
+  
+  // Create stubs for tl methods
+  setResultStub = sinon.stub(tl, "setResult");
+  execSyncStub = sinon.stub(tl, "execSync").returns({ 
+    code: 0, 
+    stdout: "", 
+    stderr: ""
+  } as any);
+  
+  // Create a mock tool runner
+  const mockToolRunner: MockToolRunner = {
+    arg: sinon.stub().returnsThis(),
+    exec: sinon.stub().callsFake(async (options: any) => {
+      // Capture the exec options (including env) for assertions
+      capturedExecOptions = options;
+      return 0; // Success exit code
+    })
+  };
+  
+  toolStub = sinon.stub(tl, "tool").returns(mockToolRunner as any);
+});
+
+After(function () {
+  // Restore all stubs after each scenario
+  sinon.restore();
+  
+  // Clean up environment variables
+  delete process.env["INPUT_LINTCHANGEDFILESONLY"];
+  delete process.env["INPUT_CACHEDOCKERIMAGE"];
+  delete process.env["INPUT_DOCKERCACHEPATH"];
+  
+  // Reset state variables
+  result = null;
+  errorOccurred = false;
+  dockerCacheEnabled = false;
+  dockerCacheTarballExists = false;
+  dockerImagePulled = false;
+  dockerImageLoadedFromCache = false;
+  dockerImageSavedToCache = false;
+  lintChangedFilesOnlyEnabled = false;
+  validateAllCodebaseSet = false;
+  validateAllCodebaseValue = "";
+  capturedExecOptions = null;
+});
 
 Given("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
@@ -71,37 +153,25 @@ Given("a cached docker image tarball exists", async function () {
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    // In CI, don't actually run the Docker command - just mock success
-    // In ADO with proper environment, this would run for real
-    if (process.env.CI || process.env.GITHUB_ACTIONS) {
-      result = "success";
-      // Simulate docker caching behavior for test assertions
-      if (dockerCacheEnabled) {
-        if (dockerCacheTarballExists) {
-          dockerImageLoadedFromCache = true;
-          dockerImagePulled = false;
-          dockerImageSavedToCache = false;
-        } else {
-          dockerImageLoadedFromCache = false;
-          dockerImagePulled = true;
-          dockerImageSavedToCache = true;
-        }
-      } else {
-        dockerImagePulled = true;
-        dockerImageSavedToCache = false;
-      }
-      // Simulate lintChangedFilesOnly behavior for test assertions
-      if (lintChangedFilesOnlyEnabled) {
+    
+    // Call the actual run function with mocked tl.tool()
+    await run();
+    
+    // Extract environment variables from captured exec options
+    if (capturedExecOptions && capturedExecOptions.env) {
+      const env = capturedExecOptions.env;
+      
+      // Check if VALIDATE_ALL_CODEBASE was set
+      if ("VALIDATE_ALL_CODEBASE" in env) {
         validateAllCodebaseSet = true;
-        validateAllCodebaseValue = "false";
+        validateAllCodebaseValue = env["VALIDATE_ALL_CODEBASE"];
       } else {
         validateAllCodebaseSet = false;
         validateAllCodebaseValue = "";
       }
-    } else {
-      await run();
-      result = "success";
     }
+    
+    result = "success";
   } catch (error) {
     if (error instanceof Error) result = error.message;
     else result = "Unknown error occurred";
