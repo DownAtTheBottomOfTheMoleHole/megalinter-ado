@@ -50,7 +50,7 @@ let validateAllCodebaseValue = "";
 let dockerImagePulled = false;
 let dockerImageLoadedFromCache = false;
 let dockerImageSavedToCache = false;
-// Sinon stubs for mocking (stored for cleanup via sinon.restore())
+// Sinon stubs for mocking (kept for cleanup via sinon.restore() in After hook)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _toolStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

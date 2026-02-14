@@ -16,7 +16,7 @@ let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
 
-// Sinon stubs for mocking (stored for cleanup via sinon.restore())
+// Sinon stubs for mocking (kept for cleanup via sinon.restore() in After hook)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _toolStub: sinon.SinonStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
