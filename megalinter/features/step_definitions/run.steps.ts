@@ -15,6 +15,7 @@ let validateAllCodebaseValue: string = "";
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
+let dockerCacheTarballExists: boolean = false; // Track cache state
 
 // Sinon stubs for mocking (kept for cleanup via sinon.restore() in After hook)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -27,6 +28,7 @@ let _setResultStub: sinon.SinonStub;
 let _getInputStub: sinon.SinonStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _getBoolInputStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _existStub: sinon.SinonStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _getVariableStub: sinon.SinonStub;
@@ -40,8 +42,9 @@ interface MockToolRunner {
 }
 
 Before(function () {
-  // Reset captured options before each scenario
+  // Reset captured options and state before each scenario
   capturedExecOptions = null;
+  dockerCacheTarballExists = false;
   
   // Stub getInput and getBoolInput to return test values
   _getInputStub = sinon.stub(tl, "getInput").callsFake((name: string) => {
@@ -54,11 +57,11 @@ Before(function () {
     return process.env[envKey]?.toUpperCase() === "TRUE";
   });
   
-  // Stub getVariable to return undefined by default (can be overridden in scenarios)
+  // Stub getVariable to return undefined by default
   _getVariableStub = sinon.stub(tl, "getVariable").returns(undefined);
   
-  // Stub exist to return false by default (can be overridden in scenarios)
-  _existStub = sinon.stub(tl, "exist").returns(false);
+  // Stub exist to check dockerCacheTarballExists variable
+  _existStub = sinon.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
   
   // Set required environment variables for tests
   process.env["INPUT_FLAVOR"] = "all";
@@ -67,7 +70,7 @@ Before(function () {
   process.env["INPUT_CREATEFIXPR"] = "false";
   process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
   
-  // Create stubs for tl methods
+  // Stub setResult
   _setResultStub = sinon.stub(tl, "setResult");
   
   // Stub execSync to return different values based on command
@@ -75,10 +78,10 @@ Before(function () {
   _execSyncStub = sinon.stub(tl, "execSync").callsFake((tool: string, args?: any): any => {
     // Check if this is a "docker images -q" command
     if (tool === "docker" && Array.isArray(args) && args.includes("images") && args.includes("-q")) {
-      // Return image ID if cache exists (configured by Given steps), empty otherwise
+      // Return image ID if cache exists, empty otherwise
       return {
         code: 0,
-        stdout: _existStub() ? "mock-image-id-12345\n" : "",
+        stdout: dockerCacheTarballExists ? "mock-image-id-12345\n" : "",
         stderr: ""
       };
     }
@@ -143,6 +146,7 @@ After(function () {
   dockerImagePulled = false;
   dockerImageLoadedFromCache = false;
   dockerImageSavedToCache = false;
+  dockerCacheTarballExists = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
   capturedExecOptions = null;
@@ -184,13 +188,13 @@ Given("lint changed files only is disabled", async function () {
 });
 
 Given("no cached docker image tarball exists", async function () {
-  // Configure exist stub to return false (tarball doesn't exist)
-  _existStub.returns(false);
+  // Set cache state to false (tarball doesn't exist)
+  dockerCacheTarballExists = false;
 });
 
 Given("a cached docker image tarball exists", async function () {
-  // Configure exist stub to return true (tarball exists)
-  _existStub.returns(true);
+  // Set cache state to true (tarball exists)
+  dockerCacheTarballExists = true;
 });
 
 When("the run function is called", async function () {
