@@ -51,7 +51,6 @@ let execStub;
 let getInputStub;
 let getBoolInputStub;
 let existStub;
-let execSyncStub;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions = null;
 // Docker caching test state
@@ -65,8 +64,15 @@ let validateAllCodebaseValue = "";
 (0, cucumber_1.Before)(function () {
     sandbox = sinon.createSandbox();
     capturedExecOptions = null;
-    // We'll configure tool stub in the When step to handle docker and npx differently
-    // For now, just prepare the sandbox
+    // Create a mock tool object
+    toolStub = {
+        arg: sandbox.stub().returnsThis(),
+        exec: sandbox.stub().resolves(0),
+    };
+    execStub = toolStub.exec;
+    // Stub tl.tool to return our mock tool
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sandbox.stub(tl, "tool").returns(toolStub);
     // Stub other tl methods that are commonly used
     sandbox.stub(tl, "setResult");
     sandbox.stub(tl, "getVariable").returns("");
@@ -74,15 +80,13 @@ let validateAllCodebaseValue = "";
     existStub = sandbox.stub(tl, "exist");
     existStub.returns(false); // No cached tarball by default
     sandbox.stub(tl, "mkdirP"); // Stub directory creation
-    // Stub execSync - used for docker image checks
-    execSyncStub = sandbox.stub(tl, "execSync");
-    execSyncStub.returns({
+    sandbox.stub(tl, "execSync").returns({
         code: 0,
         stdout: "",
         stderr: "",
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         error: undefined
-    }); // Default: empty stdout (no image found)
+    }); // Stub docker image checks
     // Stub getInput and getBoolInput - these will be configured per scenario
     getInputStub = sandbox.stub(tl, "getInput");
     getBoolInputStub = sandbox.stub(tl, "getBoolInput");
@@ -100,11 +104,6 @@ let validateAllCodebaseValue = "";
     dockerImageSavedToCache = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
-    // Clean up process.env to prevent order-dependent behavior
-    delete process.env["INPUT_CACHEDOCKERIMAGE"];
-    delete process.env["INPUT_DOCKERCACHEPATH"];
-    delete process.env["INPUT_LINTCHANGEDFILESONLY"];
-    delete process.env["VALIDATE_ALL_CODEBASE"];
 });
 (0, cucumber_1.After)(function () {
     sandbox.restore();
@@ -146,91 +145,30 @@ let validateAllCodebaseValue = "";
     // Ensure the cache directory/file does not exist for the test
     // Reset the stub to return false (the default)
     existStub.returns(false);
-    // Reset execSync to return empty stdout (no image in daemon)
-    execSyncStub.returns({
-        code: 0,
-        stdout: "",
-        stderr: "",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        error: undefined
-    });
 });
 (0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
     // In a real test environment, a mock tarball would be placed at the cache path
     // For testing, we stub tl.exist to return true
     existStub.returns(true);
-    // After docker load, the image check should return non-empty stdout
-    // This simulates the image being present in the Docker daemon after loading
-    execSyncStub.withArgs("docker", sinon.match.array.contains(["images", "-q"])).returns({
-        code: 0,
-        stdout: "mock-image-id\n",
-        stderr: "",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        error: undefined
-    });
 });
 (0, cucumber_1.When)("the run function is called", async function () {
     try {
         if (errorOccurred)
             throw new Error("Test error");
-        // Create tool stub that handles both docker and npx calls
-        const toolStubFn = sandbox.stub(tl, "tool");
-        toolStubFn.callsFake((tool) => {
-            if (tool === "docker") {
-                // Create docker-specific mock to track load/save operations
-                const dockerMock = {
-                    arg: sandbox.stub().callsFake((args) => {
-                        if (Array.isArray(args)) {
-                            if (args.includes("load")) {
-                                dockerImageLoadedFromCache = true;
-                            }
-                            else if (args.includes("save")) {
-                                dockerImageSavedToCache = true;
-                            }
-                        }
-                        return dockerMock; // Return the mock itself for chaining
-                    }),
-                    exec: sandbox.stub().resolves(0),
-                };
-                return dockerMock; // eslint-disable-line @typescript-eslint/no-explicit-any
+        // Capture the exec options when exec is called
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        execStub.callsFake(async (options) => {
+            capturedExecOptions = options;
+            // Check if VALIDATE_ALL_CODEBASE is in the environment
+            if (options && options.env && "VALIDATE_ALL_CODEBASE" in options.env) {
+                validateAllCodebaseSet = true;
+                validateAllCodebaseValue = options.env["VALIDATE_ALL_CODEBASE"];
             }
-            else if (tool === "npx") {
-                // Create npx-specific mock to capture environment variables
-                toolStub = {
-                    arg: sandbox.stub().returnsThis(),
-                    exec: sandbox.stub().callsFake(async (options) => {
-                        capturedExecOptions = options;
-                        // Determine if image was pulled based on docker commands
-                        if (dockerImageSavedToCache && !dockerImageLoadedFromCache) {
-                            dockerImagePulled = true; // Fresh pull and save
-                        }
-                        else if (dockerImageLoadedFromCache) {
-                            dockerImagePulled = false; // Loaded from cache
-                        }
-                        else if (!dockerImageLoadedFromCache && !dockerImageSavedToCache) {
-                            // No caching, assume pull happened
-                            dockerImagePulled = true;
-                        }
-                        // Check VALIDATE_ALL_CODEBASE in environment
-                        if (options && options.env && "VALIDATE_ALL_CODEBASE" in options.env) {
-                            validateAllCodebaseSet = true;
-                            validateAllCodebaseValue = options.env["VALIDATE_ALL_CODEBASE"];
-                        }
-                        else {
-                            validateAllCodebaseSet = false;
-                            validateAllCodebaseValue = "";
-                        }
-                        return 0;
-                    }),
-                };
-                execStub = toolStub.exec;
-                return toolStub; // eslint-disable-line @typescript-eslint/no-explicit-any
+            else {
+                validateAllCodebaseSet = false;
+                validateAllCodebaseValue = "";
             }
-            // Default mock for other tools
-            return {
-                arg: sandbox.stub().returnsThis(),
-                exec: sandbox.stub().resolves(0),
-            }; // eslint-disable-line @typescript-eslint/no-explicit-any
+            return 0; // Success exit code
         });
         // Actually call the run function
         await (0, megalinter_1.run)();
