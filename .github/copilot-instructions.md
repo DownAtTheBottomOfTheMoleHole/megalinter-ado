@@ -182,6 +182,7 @@ steps:
 ```
 
 The task automatically:
+
 1. Loads `$(Pipeline.Workspace)/docker-cache/megalinter.tar` if it exists
 2. Skips `docker pull` when the image is already available
 3. Saves the image to the tarball after a fresh pull
