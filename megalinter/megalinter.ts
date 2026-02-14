@@ -453,7 +453,10 @@ export async function run(): Promise<void> {
         /[^a-zA-Z0-9_.-]/g,
         "-",
       );
-      dockerCacheTarball = `${dockerCachePath}/megalinter-${flavorForCache}-${releaseForCache}.tar`;
+      dockerCacheTarball = path.join(
+        dockerCachePath,
+        `megalinter-${flavorForCache}-${releaseForCache}.tar`,
+      );
     }
 
     // If caching is enabled, attempt to load the Docker image from a cached tarball
