@@ -9,20 +9,25 @@ let errorOccurred: boolean = false;
 
 // Sinon stubs
 let sandbox: sinon.SinonSandbox;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let toolStub: sinon.SinonStubbedInstance<any>;
 let execStub: sinon.SinonStub;
 let getInputStub: sinon.SinonStub;
 let getBoolInputStub: sinon.SinonStub;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions: any = null;
 
-// Docker caching test state
+// Docker caching test state (not actively used but needed for compatibility with existing Given steps)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let dockerCacheEnabled: boolean = false;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let dockerCacheTarballExists: boolean = false;
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
 
 // Lint changed files only test state
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
@@ -40,6 +45,7 @@ Before(function () {
   execStub = toolStub.exec as sinon.SinonStub;
   
   // Stub tl.tool to return our mock tool
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sandbox.stub(tl, "tool").returns(toolStub as any);
   
   // Stub other tl methods that are commonly used
@@ -52,6 +58,7 @@ Before(function () {
     code: 0, 
     stdout: "", 
     stderr: "", 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     error: undefined as any 
   }); // Stub docker image checks
   
@@ -141,6 +148,7 @@ When("the run function is called", async function () {
     if (errorOccurred) throw new Error("Test error");
     
     // Capture the exec options when exec is called
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     execStub.callsFake(async (options: any) => {
       capturedExecOptions = options;
       

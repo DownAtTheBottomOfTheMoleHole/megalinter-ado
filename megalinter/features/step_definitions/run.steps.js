@@ -45,18 +45,23 @@ let result = null;
 let errorOccurred = false;
 // Sinon stubs
 let sandbox;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let toolStub;
 let execStub;
 let getInputStub;
 let getBoolInputStub;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions = null;
-// Docker caching test state
+// Docker caching test state (not actively used but needed for compatibility with existing Given steps)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let dockerCacheEnabled = false;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let dockerCacheTarballExists = false;
 let dockerImagePulled = false;
 let dockerImageLoadedFromCache = false;
 let dockerImageSavedToCache = false;
 // Lint changed files only test state
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let lintChangedFilesOnlyEnabled = false;
 let validateAllCodebaseSet = false;
 let validateAllCodebaseValue = "";
@@ -71,6 +76,7 @@ let validateAllCodebaseValue = "";
     };
     execStub = toolStub.exec;
     // Stub tl.tool to return our mock tool
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sandbox.stub(tl, "tool").returns(toolStub);
     // Stub other tl methods that are commonly used
     sandbox.stub(tl, "setResult");
@@ -82,6 +88,7 @@ let validateAllCodebaseValue = "";
         code: 0,
         stdout: "",
         stderr: "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         error: undefined
     }); // Stub docker image checks
     // Stub getInput and getBoolInput - these will be configured per scenario
@@ -158,6 +165,7 @@ let validateAllCodebaseValue = "";
         if (errorOccurred)
             throw new Error("Test error");
         // Capture the exec options when exec is called
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         execStub.callsFake(async (options) => {
             capturedExecOptions = options;
             // Check if VALIDATE_ALL_CODEBASE is in the environment
