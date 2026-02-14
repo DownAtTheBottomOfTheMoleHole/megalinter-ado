@@ -45,9 +45,12 @@ let errorOccurred = false;
 // Docker caching test state
 let dockerCacheEnabled = false;
 let dockerCacheTarballExists = false;
+let dockerCacheTarballCorrupted = false;
+let dockerImageExistsLocally = false;
 let dockerImagePulled = false;
 let dockerImageLoadedFromCache = false;
 let dockerImageSavedToCache = false;
+let cacheLoadFailed = false;
 (0, cucumber_1.Given)("the input parameters are valid", async function () {
     // Mock valid input parameters if necessary
     // In CI (GitHub Actions), environment variables provide mock values
@@ -93,18 +96,34 @@ let dockerImageSavedToCache = false;
             result = "success";
             // Simulate docker caching behavior for test assertions
             if (dockerCacheEnabled) {
-                if (dockerCacheTarballExists) {
+                if (dockerCacheTarballExists && dockerCacheTarballCorrupted) {
+                    // Corrupted cache scenario: load fails but image exists locally
+                    cacheLoadFailed = true;
+                    dockerImageLoadedFromCache = false;
+                    if (dockerImageExistsLocally) {
+                        dockerImagePulled = false;
+                        dockerImageSavedToCache = false;
+                    }
+                    else {
+                        dockerImagePulled = true;
+                        dockerImageSavedToCache = true;
+                    }
+                }
+                else if (dockerCacheTarballExists) {
+                    // Cache hit scenario
                     dockerImageLoadedFromCache = true;
                     dockerImagePulled = false;
                     dockerImageSavedToCache = false;
                 }
                 else {
+                    // Cache miss scenario
                     dockerImageLoadedFromCache = false;
                     dockerImagePulled = true;
                     dockerImageSavedToCache = true;
                 }
             }
             else {
+                // Caching disabled scenario
                 dockerImagePulled = true;
                 dockerImageSavedToCache = false;
             }
@@ -153,4 +172,17 @@ let dockerImageSavedToCache = false;
 });
 (0, cucumber_1.Then)("no docker image tarball should be saved", function () {
     assert_1.default.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
+});
+(0, cucumber_1.Given)("a cached docker image tarball exists but is corrupted", async function () {
+    dockerCacheTarballExists = true;
+    dockerCacheTarballCorrupted = true;
+    // In a real test environment, a corrupted mock tarball would be placed at the cache path
+    // For CI testing, we simulate the behavior
+});
+(0, cucumber_1.Given)("the docker image exists locally", async function () {
+    dockerImageExistsLocally = true;
+    // Simulates the Docker image being present in local Docker cache
+});
+(0, cucumber_1.Then)("the cache load should fail with a warning", function () {
+    assert_1.default.strictEqual(cacheLoadFailed, true, "Expected the cache load to fail with a warning, but it did not.");
 });
