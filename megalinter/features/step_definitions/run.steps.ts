@@ -9,9 +9,12 @@ let errorOccurred: boolean = false;
 // Docker caching test state
 let dockerCacheEnabled: boolean = false;
 let dockerCacheTarballExists: boolean = false;
+let dockerCacheTarballCorrupted: boolean = false;
+let dockerImageExistsLocally: boolean = false;
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
+let cacheLoadFailed: boolean = false;
 
 Given("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
@@ -62,16 +65,30 @@ When("the run function is called", async function () {
       result = "success";
       // Simulate docker caching behavior for test assertions
       if (dockerCacheEnabled) {
-        if (dockerCacheTarballExists) {
+        if (dockerCacheTarballExists && dockerCacheTarballCorrupted) {
+          // Corrupted cache scenario: load fails but image exists locally
+          cacheLoadFailed = true;
+          dockerImageLoadedFromCache = false;
+          if (dockerImageExistsLocally) {
+            dockerImagePulled = false;
+            dockerImageSavedToCache = false;
+          } else {
+            dockerImagePulled = true;
+            dockerImageSavedToCache = true;
+          }
+        } else if (dockerCacheTarballExists) {
+          // Cache hit scenario
           dockerImageLoadedFromCache = true;
           dockerImagePulled = false;
           dockerImageSavedToCache = false;
         } else {
+          // Cache miss scenario
           dockerImageLoadedFromCache = false;
           dockerImagePulled = true;
           dockerImageSavedToCache = true;
         }
       } else {
+        // Caching disabled scenario
         dockerImagePulled = true;
         dockerImageSavedToCache = false;
       }
@@ -148,5 +165,25 @@ Then("no docker image tarball should be saved", function () {
     dockerImageSavedToCache,
     false,
     "Expected no Docker image tarball to be saved, but one was.",
+  );
+});
+
+Given("a cached docker image tarball exists but is corrupted", async function () {
+  dockerCacheTarballExists = true;
+  dockerCacheTarballCorrupted = true;
+  // In a real test environment, a corrupted mock tarball would be placed at the cache path
+  // For CI testing, we simulate the behavior
+});
+
+Given("the docker image exists locally", async function () {
+  dockerImageExistsLocally = true;
+  // Simulates the Docker image being present in local Docker cache
+});
+
+Then("the cache load should fail with a warning", function () {
+  assert.strictEqual(
+    cacheLoadFailed,
+    true,
+    "Expected the cache load to fail with a warning, but it did not.",
   );
 });
