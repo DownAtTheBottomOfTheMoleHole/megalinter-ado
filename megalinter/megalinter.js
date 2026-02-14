@@ -214,16 +214,17 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         return;
     }
     // Push the branch using the System.AccessToken via an HTTP header
-    // to avoid embedding the token in the remote URL or .git/config.
+    // to avoid embedding the token in the remote URL or .git/config or in process argv.
     const extraHeader = `Authorization: Bearer ${accessToken}`;
+    // Mask the header value in logs and expose it via environment variable instead of argv
+    tl.setVariable("GIT_HTTP_EXTRAHEADER", extraHeader, true);
+    const pushEnv = Object.assign({}, process.env, { GIT_HTTP_EXTRAHEADER: extraHeader });
     const pushResult = tl.execSync("git", [
-        "-c",
-        `http.extraheader=${extraHeader}`,
         "push",
         "-u",
         "origin",
         fixBranchName,
-    ], { cwd: workingDir });
+    ], { cwd: workingDir, env: pushEnv });
     if (pushResult.code !== 0) {
         console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
