@@ -291,16 +291,21 @@ function validateDockerCachePath(cachePath: string): string | null {
     return null;
   }
 
-  // Normalize the path to resolve any relative components (e.g., "..", ".")
-  const normalizedPath = path.normalize(cachePath);
-
-  // Check for path traversal attempts
-  if (normalizedPath.includes("..")) {
+  // Check for path traversal attempts BEFORE normalization
+  if (cachePath.includes("..")) {
     console.warn(
       `⚠️ Invalid Docker cache path: contains path traversal sequence: ${cachePath}`,
     );
     return null;
   }
+
+  // Normalize the path to resolve any relative components (e.g., ".", redundant slashes)
+  const normalizedPath = path.normalize(cachePath);
+
+  // Get Azure DevOps variables
+  const workspace = tl.getVariable("Pipeline.Workspace");
+  const sourcesDirectory = tl.getVariable("Build.SourcesDirectory");
+  const agentTempDirectory = tl.getVariable("Agent.TempDirectory");
 
   // Ensure the path is absolute or make it relative to a safe location
   // Azure DevOps variables like $(Pipeline.Workspace) are already absolute
@@ -309,15 +314,11 @@ function validateDockerCachePath(cachePath: string): string | null {
     absolutePath = normalizedPath;
   } else {
     // Make relative paths relative to Pipeline.Workspace or a safe default
-    const workspace = tl.getVariable("Pipeline.Workspace") || "/tmp";
-    absolutePath = path.join(workspace, normalizedPath);
+    const safeBase = workspace || "/tmp";
+    absolutePath = path.join(safeBase, normalizedPath);
   }
 
   // Additional validation: ensure path is within expected boundaries
-  const workspace = tl.getVariable("Pipeline.Workspace");
-  const sourcesDirectory = tl.getVariable("Build.SourcesDirectory");
-  const agentTempDirectory = tl.getVariable("Agent.TempDirectory");
-
   // Allow paths under workspace, sources directory, temp directory, or /tmp
   const allowedPrefixes = [
     workspace,
