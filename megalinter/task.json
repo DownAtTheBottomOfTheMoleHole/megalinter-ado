@@ -136,7 +136,7 @@
       "type": "string"
     },
     {
-      "defaultValue": "true",
+      "defaultValue": "false",
       "helpMarkDown": "Enable built-in Docker image caching. When enabled, the task will automatically load the MegaLinter Docker image from a cached tarball (if available) and save it after pulling. Pair with the Azure DevOps Cache@2 task pointed at the cache path for optimal results on Microsoft-hosted agents.",
       "label": "Cache Docker Image",
       "name": "cacheDockerImage",
