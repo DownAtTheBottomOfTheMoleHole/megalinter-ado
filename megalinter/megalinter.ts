@@ -365,8 +365,17 @@ export async function run(): Promise<void> {
     const dockerCachePath =
       tl.getInput("dockerCachePath") ||
       `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
-    const dockerCacheTarball = `${dockerCachePath}/megalinter.tar`;
 
+    // Use a tarball name that is specific to the MegaLinter image (flavor + release)
+    const flavorForCache = (tl.getInput("flavor") || "all").replace(
+      /[^a-zA-Z0-9_.-]/g,
+      "-",
+    );
+    const releaseForCache = (tl.getInput("release") || "latest").replace(
+      /[^a-zA-Z0-9_.-]/g,
+      "-",
+    );
+    const dockerCacheTarball = `${dockerCachePath}/megalinter-${flavorForCache}-${releaseForCache}.tar`;
     // If caching is enabled, attempt to load the Docker image from a cached tarball
     if (cacheDockerImage) {
       console.log("Docker image caching is enabled");
