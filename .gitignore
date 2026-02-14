@@ -39,3 +39,6 @@ megalinter-reports/
 
 # Azure DevOps task build artifacts
 **/.taskkey
+
+# Cucumber test reports (generated at build time)
+**/cucumber-report.json
