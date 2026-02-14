@@ -137,7 +137,7 @@
     },
     {
       "defaultValue": "true",
-      "helpMarkDown": "Enable built-in Docker image caching. When enabled, the task will automatically load the MegaLinter Docker image from a cached tarball (if available) and save it after pulling. Pair with the Azure DevOps Cache@2 task pointed at the cache path for optimal results on Microsoft-hosted agents.",
+      "helpMarkDown": "Enable built-in Docker image caching to automatically save and load the MegaLinter Docker image from a tarball. This feature requires pairing with the Azure DevOps Cache@2 task on Microsoft-hosted agents to persist the cache between runs; otherwise, the tarball is recreated on each run and discarded with the agent. On self-hosted agents, Docker already caches images natively, so this option is usually only needed if you want faster container startup times or are using a dedicated cache directory.",
       "label": "Cache Docker Image",
       "name": "cacheDockerImage",
       "required": false,
