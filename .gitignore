@@ -41,5 +41,4 @@ megalinter-reports/
 **/.taskkey
 
 # Cucumber test reports (generated at build time)
-cucumber-report.json
 **/cucumber-report.json
