@@ -118,9 +118,7 @@ Task parameters in `task.json` map to the `mega-linter-runner` CLI arguments:
 
 ## Docker Optimization Pattern
 
-The task **pre-checks** for Docker images before pulling, and optionally supports **built-in caching** via `docker save` / `docker load`:
-
-### Image Detection
+The task **pre-checks** for Docker images before pulling:
 
 ```typescript
 const dockerImageCheck = tl.execSync("docker", [
@@ -136,57 +134,6 @@ if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
 ```
 
 This avoids unnecessary pulls when the image is already cached. Preserve this pattern when modifying Docker-related code.
-
-### Built-in Docker Image Caching
-
-When `cacheDockerImage` is enabled:
-
-1. **Before pull**: If a tarball exists at `<dockerCachePath>/megalinter.tar`, the task runs `docker load -i` to restore it
-2. **Image check**: If the image is already present (loaded from cache or Docker daemon cache), pull is skipped
-3. **After pull**: If the image was freshly pulled, the task runs `docker save -o` to persist the tarball for future runs
-
-Cache failures (load or save) are **non-fatal** — they log warnings but do not fail the task. The `imageWasPulled` flag tracks whether a fresh pull occurred to avoid unnecessary saves.
-
-Pair with Azure Pipelines `Cache@2` task to persist the tarball between pipeline runs.
-
-## Caching for Pipeline Consumers
-
-The extension supports Docker image caching for faster pipeline runs via the `cacheDockerImage` task input.
-
-### Self-Hosted Agents (Recommended)
-
-Docker images persist between runs automatically. The task checks for cached images before pulling — no additional caching configuration needed.
-
-### Microsoft-Hosted Agents with Built-in Caching
-
-Enable `cacheDockerImage: true` and add a `Cache@2` task to persist the tarball between runs:
-
-```yaml
-variables:
-  MEGALINTER_IMAGE: oxsecurity/megalinter-javascript:v8
-
-steps:
-  # Cache Docker images using Pipeline Caching
-  - task: Cache@2
-    displayName: Cache Docker images
-    inputs:
-      key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
-      path: $(Pipeline.Workspace)/docker-cache
-
-  # Run MegaLinter — built-in caching handles docker load/save automatically
-  - task: MegaLinter@1
-    inputs:
-      flavor: javascript
-      release: v8
-      cacheDockerImage: true
-```
-
-The task automatically:
-1. Loads `$(Pipeline.Workspace)/docker-cache/megalinter.tar` if it exists
-2. Skips `docker pull` when the image is already available
-3. Saves the image to the tarball after a fresh pull
-
-No manual `docker load` / `docker save` scripts are required.
 
 ## Common Gotchas
 

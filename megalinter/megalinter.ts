@@ -360,56 +360,14 @@ export async function run(): Promise<void> {
       }
     });
 
-    // Docker image caching configuration
-    const cacheDockerImage = tl.getBoolInput("cacheDockerImage");
-    const dockerCachePath =
-      tl.getInput("dockerCachePath") ||
-      `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
-    const flavorForCache = tl.getInput("flavor") || "default";
-    const releaseForCache = tl.getInput("release") || "latest";
-    const safeFlavorForCache = flavorForCache.replace(/[^a-zA-Z0-9_.-]/g, "_");
-    const safeReleaseForCache = releaseForCache.replace(
-      /[^a-zA-Z0-9_.-]/g,
-      "_",
-    );
-    const dockerCacheTarball = `${dockerCachePath}/megalinter-${safeFlavorForCache}-${safeReleaseForCache}.tar`;
-
-    // If caching is enabled, attempt to load the Docker image from a cached tarball
-    if (cacheDockerImage) {
-      console.log("Docker image caching is enabled");
-      if (tl.exist(dockerCacheTarball)) {
-        console.log(
-          `Loading Docker image from cache: ${dockerCacheTarball}`,
-        );
-        const loadTool = tl.tool("docker");
-        loadTool.arg(["load", "-i", dockerCacheTarball]);
-        const loadCode = await loadTool.exec({
-          failOnStdErr: false,
-          silent: false,
-        } as tr.IExecOptions);
-        if (loadCode === 0) {
-          console.log("✅ Docker image loaded from cache successfully");
-        } else {
-          console.log(
-            "⚠️ Failed to load Docker image from cache, will pull instead",
-          );
-        }
-      } else {
-        console.log(
-          `No cached Docker image found at: ${dockerCacheTarball}`,
-        );
-      }
-    }
-
     // Check if the Docker image is already available in the local Docker cache
-    // This covers both self-hosted agent caching and tarball-loaded images
+    // This helps with caching when using self-hosted agents or Docker layer caching
     const dockerImageCheck = tl.execSync("docker", [
       "images",
       "-q",
       dockerImageName,
     ]);
 
-    let imageWasPulled = false;
     if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
       console.log(
         `Docker image '${dockerImageName}' found in cache. Skipping pull.`,
@@ -433,26 +391,6 @@ export async function run(): Promise<void> {
         return;
       }
       console.log("Docker image pulled successfully.");
-      imageWasPulled = true;
-    }
-
-    // Save the Docker image to cache tarball for future runs
-    if (cacheDockerImage && imageWasPulled) {
-      console.log(`Saving Docker image to cache: ${dockerCacheTarball}`);
-      tl.mkdirP(dockerCachePath);
-      const saveTool = tl.tool("docker");
-      saveTool.arg(["save", "-o", dockerCacheTarball, dockerImageName]);
-      const saveCode = await saveTool.exec({
-        failOnStdErr: false,
-        silent: false,
-      } as tr.IExecOptions);
-      if (saveCode === 0) {
-        console.log("✅ Docker image saved to cache successfully");
-      } else {
-        console.log(
-          "⚠️ Failed to save Docker image to cache (non-fatal, continuing)",
-        );
-      }
     }
 
     // Execute mega-linter-runner via npx with streaming output

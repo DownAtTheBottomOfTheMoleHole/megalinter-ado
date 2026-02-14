@@ -37,58 +37,38 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
-const assert = require("assert");
+const assert_1 = __importDefault(require("assert"));
+const tl = __importStar(require("azure-pipelines-task-lib/task"));
+const megalinter_1 = require("../../megalinter"); // Ensure this path is correct
 let result = null;
 let errorOccurred = false;
-let isCI = false;
-// Docker caching test state
-let dockerCacheEnabled = false;
-let dockerCacheTarballExists = false;
-let dockerImagePulled = false;
-let dockerImageLoadedFromCache = false;
-let dockerImageSavedToCache = false;
 // Lint changed files only test state
 let lintChangedFilesOnlyEnabled = false;
 let validateAllCodebaseSet = false;
 let validateAllCodebaseValue = "";
-// Lazy import for run function - only imported if needed in non-CI environments
-let run = null;
-// Initialize CI detection
-// GitHub Actions automatically sets GITHUB_ACTIONS=true
-// Set a flag at the start of test execution to avoid timeout issues
-isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
 // Reset state before each scenario
 (0, cucumber_1.Before)(function () {
     result = null;
     errorOccurred = false;
-    dockerCacheEnabled = false;
-    dockerCacheTarballExists = false;
-    dockerImagePulled = false;
-    dockerImageLoadedFromCache = false;
-    dockerImageSavedToCache = false;
     lintChangedFilesOnlyEnabled = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
 });
 (0, cucumber_1.Given)("the input parameters are valid", async function () {
-    // Test assumes valid inputs are available through environment variables
-    // In CI, the workflow sets INPUT_* environment variables
-    // We don't need to verify them here as the test is mocked in CI anyway
-    errorOccurred = false;
+    // Mock valid input parameters if necessary
+    // In CI (GitHub Actions), environment variables provide mock values
+    // In ADO, real values are provided
+    // Just verify we can get the input without error
+    try {
+        tl.getInput("sampleInput", false); // Don't require, just test
+    }
+    catch {
+        // Expected in some environments, that's okay
+    }
 });
 (0, cucumber_1.Given)("the input parameters are invalid", async function () {
     // Mock invalid input parameters or set error flag directly
     errorOccurred = true;
-});
-(0, cucumber_1.Given)("docker image caching is enabled", async function () {
-    dockerCacheEnabled = true;
-    process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
-    process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
-});
-(0, cucumber_1.Given)("docker image caching is disabled", async function () {
-    dockerCacheEnabled = false;
-    process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
-    delete process.env["INPUT_DOCKERCACHEPATH"];
 });
 (0, cucumber_1.Given)("lint changed files only is enabled", async function () {
     lintChangedFilesOnlyEnabled = true;
@@ -98,40 +78,14 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
     lintChangedFilesOnlyEnabled = false;
     process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
-(0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
-    dockerCacheTarballExists = false;
-    // Ensure the cache directory/file does not exist for the test
-});
-(0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
-    dockerCacheTarballExists = true;
-    // In a real test environment, a mock tarball would be placed at the cache path
-    // For CI testing, we simulate the behavior
-});
 (0, cucumber_1.When)("the run function is called", async function () {
     try {
         if (errorOccurred)
             throw new Error("Test error");
-        // In CI environments (GitHub Actions, Jenkins, etc.), use mocked behavior
-        // This prevents attempts to execute Docker commands that would hang/timeout
-        if (isCI) {
+        // In CI, don't actually run the Docker command - just mock success
+        // In ADO with proper environment, this would run for real
+        if (process.env.CI || process.env.GITHUB_ACTIONS) {
             result = "success";
-            // Simulate docker caching behavior for test assertions
-            if (dockerCacheEnabled) {
-                if (dockerCacheTarballExists) {
-                    dockerImageLoadedFromCache = true;
-                    dockerImagePulled = false;
-                    dockerImageSavedToCache = false;
-                }
-                else {
-                    dockerImageLoadedFromCache = false;
-                    dockerImagePulled = true;
-                    dockerImageSavedToCache = true;
-                }
-            }
-            else {
-                dockerImagePulled = true;
-                dockerImageSavedToCache = false;
-            }
             // Simulate lintChangedFilesOnly behavior for test assertions
             if (lintChangedFilesOnlyEnabled) {
                 validateAllCodebaseSet = true;
@@ -143,15 +97,7 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
             }
         }
         else {
-            // Only import and run in actual Azure DevOps environment
-            // Lazy load to avoid import errors in CI
-            if (!run) {
-                const module = await Promise.resolve().then(() => require("../../megalinter"));
-                run = module.run;
-            }
-            if (run) {
-                await run();
-            }
+            await (0, megalinter_1.run)();
             result = "success";
         }
     }
@@ -175,30 +121,15 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
     }
 });
 (0, cucumber_1.Then)("the function should execute successfully", function () {
-    assert.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
+    assert_1.default.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
 });
 (0, cucumber_1.Then)("the function should fail with an error message", function () {
-    assert.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
-});
-(0, cucumber_1.Then)("the docker image should be pulled", function () {
-    assert.strictEqual(dockerImagePulled, true, "Expected the Docker image to be pulled, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should be saved to the cache path", function () {
-    assert.strictEqual(dockerImageSavedToCache, true, "Expected the Docker image to be saved to cache, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should be loaded from cache", function () {
-    assert.strictEqual(dockerImageLoadedFromCache, true, "Expected the Docker image to be loaded from cache, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should not be pulled", function () {
-    assert.strictEqual(dockerImagePulled, false, "Expected the Docker image to not be pulled, but it was.");
-});
-(0, cucumber_1.Then)("no docker image tarball should be saved", function () {
-    assert.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
+    assert_1.default.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-    assert.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
-    assert.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
+    assert_1.default.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
+    assert_1.default.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-    assert.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
+    assert_1.default.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
 });

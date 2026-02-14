@@ -1,4 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, Before } from "@cucumber/cucumber";
 import assert from "assert";
 import * as tl from "azure-pipelines-task-lib/task";
 import { run } from "../../megalinter"; // Ensure this path is correct
@@ -6,17 +6,19 @@ import { run } from "../../megalinter"; // Ensure this path is correct
 let result: string | null = null;
 let errorOccurred: boolean = false;
 
-// Docker caching test state
-let dockerCacheEnabled: boolean = false;
-let dockerCacheTarballExists: boolean = false;
-let dockerImagePulled: boolean = false;
-let dockerImageLoadedFromCache: boolean = false;
-let dockerImageSavedToCache: boolean = false;
-
 // Lint changed files only test state
 let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
+
+// Reset state before each scenario
+Before(function () {
+  result = null;
+  errorOccurred = false;
+  lintChangedFilesOnlyEnabled = false;
+  validateAllCodebaseSet = false;
+  validateAllCodebaseValue = "";
+});
 
 Given("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
@@ -35,18 +37,6 @@ Given("the input parameters are invalid", async function () {
   errorOccurred = true;
 });
 
-Given("docker image caching is enabled", async function () {
-  dockerCacheEnabled = true;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
-  process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
-});
-
-Given("docker image caching is disabled", async function () {
-  dockerCacheEnabled = false;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
-  delete process.env["INPUT_DOCKERCACHEPATH"];
-});
-
 Given("lint changed files only is enabled", async function () {
   lintChangedFilesOnlyEnabled = true;
   process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
@@ -57,17 +47,6 @@ Given("lint changed files only is disabled", async function () {
   process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
 
-Given("no cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = false;
-  // Ensure the cache directory/file does not exist for the test
-});
-
-Given("a cached docker image tarball exists", async function () {
-  dockerCacheTarballExists = true;
-  // In a real test environment, a mock tarball would be placed at the cache path
-  // For CI testing, we simulate the behavior
-});
-
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
@@ -75,21 +54,6 @@ When("the run function is called", async function () {
     // In ADO with proper environment, this would run for real
     if (process.env.CI || process.env.GITHUB_ACTIONS) {
       result = "success";
-      // Simulate docker caching behavior for test assertions
-      if (dockerCacheEnabled) {
-        if (dockerCacheTarballExists) {
-          dockerImageLoadedFromCache = true;
-          dockerImagePulled = false;
-          dockerImageSavedToCache = false;
-        } else {
-          dockerImageLoadedFromCache = false;
-          dockerImagePulled = true;
-          dockerImageSavedToCache = true;
-        }
-      } else {
-        dockerImagePulled = true;
-        dockerImageSavedToCache = false;
-      }
       // Simulate lintChangedFilesOnly behavior for test assertions
       if (lintChangedFilesOnlyEnabled) {
         validateAllCodebaseSet = true;
@@ -131,46 +95,6 @@ Then("the function should fail with an error message", function () {
     result,
     "Test error",
     "Expected the function to fail with a specific error message, but it did not.",
-  );
-});
-
-Then("the docker image should be pulled", function () {
-  assert.strictEqual(
-    dockerImagePulled,
-    true,
-    "Expected the Docker image to be pulled, but it was not.",
-  );
-});
-
-Then("the docker image should be saved to the cache path", function () {
-  assert.strictEqual(
-    dockerImageSavedToCache,
-    true,
-    "Expected the Docker image to be saved to cache, but it was not.",
-  );
-});
-
-Then("the docker image should be loaded from cache", function () {
-  assert.strictEqual(
-    dockerImageLoadedFromCache,
-    true,
-    "Expected the Docker image to be loaded from cache, but it was not.",
-  );
-});
-
-Then("the docker image should not be pulled", function () {
-  assert.strictEqual(
-    dockerImagePulled,
-    false,
-    "Expected the Docker image to not be pulled, but it was.",
-  );
-});
-
-Then("no docker image tarball should be saved", function () {
-  assert.strictEqual(
-    dockerImageSavedToCache,
-    false,
-    "Expected no Docker image tarball to be saved, but one was.",
   );
 });
 

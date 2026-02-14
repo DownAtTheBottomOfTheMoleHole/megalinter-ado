@@ -214,17 +214,16 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         return;
     }
     // Push the branch using the System.AccessToken via an HTTP header
-    // to avoid embedding the token in the remote URL or .git/config or in process argv.
+    // to avoid embedding the token in the remote URL or .git/config.
     const extraHeader = `Authorization: Bearer ${accessToken}`;
-    // Mask the header value in logs and expose it via environment variable instead of argv
-    tl.setVariable("GIT_HTTP_EXTRAHEADER", extraHeader, true);
-    const pushEnv = Object.assign({}, process.env, { GIT_HTTP_EXTRAHEADER: extraHeader });
     const pushResult = tl.execSync("git", [
+        "-c",
+        `http.extraheader=${extraHeader}`,
         "push",
         "-u",
         "origin",
         fixBranchName,
-    ], { cwd: workingDir, env: pushEnv });
+    ], { cwd: workingDir });
     if (pushResult.code !== 0) {
         console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
@@ -313,41 +312,13 @@ async function run() {
                 args.push(cliArg);
             }
         });
-        // Docker image caching configuration
-        const cacheDockerImage = tl.getBoolInput("cacheDockerImage");
-        const dockerCachePath = tl.getInput("dockerCachePath") ||
-            `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
-        const dockerCacheTarball = `${dockerCachePath}/megalinter.tar`;
-        // If caching is enabled, attempt to load the Docker image from a cached tarball
-        if (cacheDockerImage) {
-            console.log("Docker image caching is enabled");
-            if (tl.exist(dockerCacheTarball)) {
-                console.log(`Loading Docker image from cache: ${dockerCacheTarball}`);
-                const loadTool = tl.tool("docker");
-                loadTool.arg(["load", "-i", dockerCacheTarball]);
-                const loadCode = await loadTool.exec({
-                    failOnStdErr: false,
-                    silent: false,
-                });
-                if (loadCode === 0) {
-                    console.log("✅ Docker image loaded from cache successfully");
-                }
-                else {
-                    console.log("⚠️ Failed to load Docker image from cache, will pull instead");
-                }
-            }
-            else {
-                console.log(`No cached Docker image found at: ${dockerCacheTarball}`);
-            }
-        }
         // Check if the Docker image is already available in the local Docker cache
-        // This covers both self-hosted agent caching and tarball-loaded images
+        // This helps with caching when using self-hosted agents or Docker layer caching
         const dockerImageCheck = tl.execSync("docker", [
             "images",
             "-q",
             dockerImageName,
         ]);
-        let imageWasPulled = false;
         if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
             console.log(`Docker image '${dockerImageName}' found in cache. Skipping pull.`);
         }
@@ -365,24 +336,6 @@ async function run() {
                 return;
             }
             console.log("Docker image pulled successfully.");
-            imageWasPulled = true;
-        }
-        // Save the Docker image to cache tarball for future runs
-        if (cacheDockerImage && imageWasPulled) {
-            console.log(`Saving Docker image to cache: ${dockerCacheTarball}`);
-            tl.mkdirP(dockerCachePath);
-            const saveTool = tl.tool("docker");
-            saveTool.arg(["save", "-o", dockerCacheTarball, dockerImageName]);
-            const saveCode = await saveTool.exec({
-                failOnStdErr: false,
-                silent: false,
-            });
-            if (saveCode === 0) {
-                console.log("✅ Docker image saved to cache successfully");
-            }
-            else {
-                console.log("⚠️ Failed to save Docker image to cache (non-fatal, continuing)");
-            }
         }
         // Execute mega-linter-runner via npx with streaming output
         const npxPackage = runnerVersion === "latest"
