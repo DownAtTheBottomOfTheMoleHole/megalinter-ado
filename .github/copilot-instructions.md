@@ -141,9 +141,9 @@ This avoids unnecessary pulls when the image is already cached. Preserve this pa
 
 When `cacheDockerImage` is enabled:
 
-1. **Before pull**: If a tarball exists at `<dockerCachePath>/megalinter.tar`, the task runs `docker load -i` to restore it
+1. **Before pull**: If a tarball exists at `<dockerCachePath>/megalinter-<flavor>-<release>.tar` (for example, `megalinter-security-v9.tar`), the task runs `docker load -i` to restore it
 2. **Image check**: If the image is already present (loaded from cache or Docker daemon cache), pull is skipped
-3. **After pull**: If the image was freshly pulled, the task runs `docker save -o` to persist the tarball for future runs
+3. **After pull**: If the image was freshly pulled, the task runs `docker save -o` to persist the same flavor+release-specific tarball for future runs
 
 Cache failures (load or save) are **non-fatal** — they log warnings but do not fail the task. The `imageWasPulled` flag tracks whether a fresh pull occurred to avoid unnecessary saves.
 
