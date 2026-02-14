@@ -37,7 +37,6 @@ const cucumber_1 = require("@cucumber/cucumber");
 const assert = __importStar(require("assert"));
 let result = null;
 let errorOccurred = false;
-let isCI = false;
 // Docker caching test state
 let dockerCacheEnabled = false;
 let dockerCacheTarballExists = false;
@@ -48,12 +47,8 @@ let dockerImageSavedToCache = false;
 let lintChangedFilesOnlyEnabled = false;
 let validateAllCodebaseSet = false;
 let validateAllCodebaseValue = "";
-// Lazy import for run function - only imported if needed in non-CI environments
+// Lazy import for run function - only imported if needed in Azure Pipelines
 let run = null;
-// Initialize CI detection
-// GitHub Actions automatically sets GITHUB_ACTIONS=true
-// Set a flag at the start of test execution to avoid timeout issues
-isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
 // Reset state before each scenario
 (0, cucumber_1.Before)(function () {
     result = null;
@@ -66,6 +61,11 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
     lintChangedFilesOnlyEnabled = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
+    // Clean up process.env to prevent order-dependent behavior
+    delete process.env["INPUT_CACHEDOCKERIMAGE"];
+    delete process.env["INPUT_DOCKERCACHEPATH"];
+    delete process.env["INPUT_LINTCHANGEDFILESONLY"];
+    delete process.env["VALIDATE_ALL_CODEBASE"];
 });
 (0, cucumber_1.Given)("the input parameters are valid", async function () {
     // Test assumes valid inputs are available through environment variables
@@ -108,9 +108,11 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
     try {
         if (errorOccurred)
             throw new Error("Test error");
-        // In CI environments (GitHub Actions, Jenkins, etc.), use mocked behavior
-        // This prevents attempts to execute Docker commands that would hang/timeout
-        if (isCI) {
+        // Mock by default to avoid executing real Docker/npx commands outside Azure Pipelines
+        // Only run real task when explicitly in Azure DevOps (TF_BUILD is set)
+        const isAzurePipelines = !!process.env.TF_BUILD;
+        if (!isAzurePipelines) {
+            // Mocked behavior - simulate the task without executing real commands
             result = "success";
             // Simulate docker caching behavior for test assertions
             if (dockerCacheEnabled) {
@@ -141,7 +143,7 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
         }
         else {
             // Only import and run in actual Azure DevOps environment
-            // Lazy load to avoid import errors in CI
+            // Lazy load to avoid import errors in mocked environments
             if (!run) {
                 const module = await Promise.resolve().then(() => __importStar(require("../../megalinter")));
                 run = module.run;
@@ -150,6 +152,16 @@ isCI = !!(process.env.CI || process.env.GITHUB_ACTIONS);
                 await run();
             }
             result = "success";
+            // In non-mocked runs, read the actual environment set by run()
+            const validateAllCodebaseEnv = process.env.VALIDATE_ALL_CODEBASE;
+            if (typeof validateAllCodebaseEnv !== "undefined") {
+                validateAllCodebaseSet = true;
+                validateAllCodebaseValue = validateAllCodebaseEnv;
+            }
+            else {
+                validateAllCodebaseSet = false;
+                validateAllCodebaseValue = "";
+            }
         }
     }
     catch (error) {
