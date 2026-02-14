@@ -50,6 +50,7 @@ let validateAllCodebaseValue = "";
 let dockerImagePulled = false;
 let dockerImageLoadedFromCache = false;
 let dockerImageSavedToCache = false;
+let dockerCacheTarballExists = false; // Track cache state
 // Sinon stubs for mocking (kept for cleanup via sinon.restore() in After hook)
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _toolStub;
@@ -61,14 +62,16 @@ let _setResultStub;
 let _getInputStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _getBoolInputStub;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _existStub;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let _getVariableStub;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions = null;
 (0, cucumber_1.Before)(function () {
-    // Reset captured options before each scenario
+    // Reset captured options and state before each scenario
     capturedExecOptions = null;
+    dockerCacheTarballExists = false;
     // Stub getInput and getBoolInput to return test values
     _getInputStub = sinon.stub(tl, "getInput").callsFake((name) => {
         const envKey = `INPUT_${name.toUpperCase()}`;
@@ -78,27 +81,27 @@ let capturedExecOptions = null;
         const envKey = `INPUT_${name.toUpperCase()}`;
         return process.env[envKey]?.toUpperCase() === "TRUE";
     });
-    // Stub getVariable to return undefined by default (can be overridden in scenarios)
+    // Stub getVariable to return undefined by default
     _getVariableStub = sinon.stub(tl, "getVariable").returns(undefined);
-    // Stub exist to return false by default (can be overridden in scenarios)
-    _existStub = sinon.stub(tl, "exist").returns(false);
+    // Stub exist to check dockerCacheTarballExists variable
+    _existStub = sinon.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
     // Set required environment variables for tests
     process.env["INPUT_FLAVOR"] = "all";
     process.env["INPUT_RELEASE"] = "latest";
     process.env["INPUT_FIX"] = "false";
     process.env["INPUT_CREATEFIXPR"] = "false";
     process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
-    // Create stubs for tl methods
+    // Stub setResult
     _setResultStub = sinon.stub(tl, "setResult");
     // Stub execSync to return different values based on command
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     _execSyncStub = sinon.stub(tl, "execSync").callsFake((tool, args) => {
         // Check if this is a "docker images -q" command
         if (tool === "docker" && Array.isArray(args) && args.includes("images") && args.includes("-q")) {
-            // Return image ID if cache exists (configured by Given steps), empty otherwise
+            // Return image ID if cache exists, empty otherwise
             return {
                 code: 0,
-                stdout: _existStub() ? "mock-image-id-12345\n" : "",
+                stdout: dockerCacheTarballExists ? "mock-image-id-12345\n" : "",
                 stderr: ""
             };
         }
@@ -159,6 +162,7 @@ let capturedExecOptions = null;
     dockerImagePulled = false;
     dockerImageLoadedFromCache = false;
     dockerImageSavedToCache = false;
+    dockerCacheTarballExists = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
     capturedExecOptions = null;
@@ -194,12 +198,12 @@ let capturedExecOptions = null;
     process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
 });
 (0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
-    // Configure exist stub to return false (tarball doesn't exist)
-    _existStub.returns(false);
+    // Set cache state to false (tarball doesn't exist)
+    dockerCacheTarballExists = false;
 });
 (0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
-    // Configure exist stub to return true (tarball exists)
-    _existStub.returns(true);
+    // Set cache state to true (tarball exists)
+    dockerCacheTarballExists = true;
 });
 (0, cucumber_1.When)("the run function is called", async function () {
     try {
