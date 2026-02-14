@@ -1,10 +1,19 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import assert from "assert";
+import * as sinon from "sinon";
 import * as tl from "azure-pipelines-task-lib/task";
 import { run } from "../../megalinter"; // Ensure this path is correct
 
 let result: string | null = null;
 let errorOccurred: boolean = false;
+
+// Sinon stubs
+let sandbox: sinon.SinonSandbox;
+let toolStub: sinon.SinonStubbedInstance<any>;
+let execStub: sinon.SinonStub;
+let getInputStub: sinon.SinonStub;
+let getBoolInputStub: sinon.SinonStub;
+let capturedExecOptions: any = null;
 
 // Docker caching test state
 let dockerCacheEnabled: boolean = false;
@@ -17,6 +26,63 @@ let dockerImageSavedToCache: boolean = false;
 let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
+
+// Setup and teardown for each scenario
+Before(function () {
+  sandbox = sinon.createSandbox();
+  capturedExecOptions = null;
+  
+  // Create a mock tool object
+  toolStub = {
+    arg: sandbox.stub().returnsThis(),
+    exec: sandbox.stub().resolves(0),
+  };
+  execStub = toolStub.exec as sinon.SinonStub;
+  
+  // Stub tl.tool to return our mock tool
+  sandbox.stub(tl, "tool").returns(toolStub as any);
+  
+  // Stub other tl methods that are commonly used
+  sandbox.stub(tl, "setResult");
+  sandbox.stub(tl, "getVariable").returns("");
+  sandbox.stub(tl, "which").returns("/usr/bin/npx");
+  sandbox.stub(tl, "exist").returns(false); // No cached tarball by default
+  sandbox.stub(tl, "mkdirP"); // Stub directory creation
+  sandbox.stub(tl, "execSync").returns({ 
+    code: 0, 
+    stdout: "", 
+    stderr: "", 
+    error: undefined as any 
+  }); // Stub docker image checks
+  
+  // Stub getInput and getBoolInput - these will be configured per scenario
+  getInputStub = sandbox.stub(tl, "getInput");
+  getBoolInputStub = sandbox.stub(tl, "getBoolInput");
+  
+  // Default stubs - return empty/false for all inputs
+  getInputStub.returns("");
+  getBoolInputStub.returns(false);
+  
+  // Set minimal required inputs
+  getInputStub.withArgs("flavor").returns("javascript");
+  getInputStub.withArgs("release").returns("v8");
+  
+  // Reset test state
+  result = null;
+  errorOccurred = false;
+  dockerCacheEnabled = false;
+  dockerCacheTarballExists = false;
+  dockerImagePulled = false;
+  dockerImageLoadedFromCache = false;
+  dockerImageSavedToCache = false;
+  lintChangedFilesOnlyEnabled = false;
+  validateAllCodebaseSet = false;
+  validateAllCodebaseValue = "";
+});
+
+After(function () {
+  sandbox.restore();
+});
 
 Given("the input parameters are valid", async function () {
   // Mock valid input parameters if necessary
@@ -49,12 +115,14 @@ Given("docker image caching is disabled", async function () {
 
 Given("lint changed files only is enabled", async function () {
   lintChangedFilesOnlyEnabled = true;
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
+  // Configure the stub to return true for lintChangedFilesOnly
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
 });
 
 Given("lint changed files only is disabled", async function () {
   lintChangedFilesOnlyEnabled = false;
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
+  // Configure the stub to return false for lintChangedFilesOnly (already default)
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
 });
 
 Given("no cached docker image tarball exists", async function () {
@@ -71,37 +139,26 @@ Given("a cached docker image tarball exists", async function () {
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    // In CI, don't actually run the Docker command - just mock success
-    // In ADO with proper environment, this would run for real
-    if (process.env.CI || process.env.GITHUB_ACTIONS) {
-      result = "success";
-      // Simulate docker caching behavior for test assertions
-      if (dockerCacheEnabled) {
-        if (dockerCacheTarballExists) {
-          dockerImageLoadedFromCache = true;
-          dockerImagePulled = false;
-          dockerImageSavedToCache = false;
-        } else {
-          dockerImageLoadedFromCache = false;
-          dockerImagePulled = true;
-          dockerImageSavedToCache = true;
-        }
-      } else {
-        dockerImagePulled = true;
-        dockerImageSavedToCache = false;
-      }
-      // Simulate lintChangedFilesOnly behavior for test assertions
-      if (lintChangedFilesOnlyEnabled) {
+    
+    // Capture the exec options when exec is called
+    execStub.callsFake(async (options: any) => {
+      capturedExecOptions = options;
+      
+      // Check if VALIDATE_ALL_CODEBASE is in the environment
+      if (options && options.env && "VALIDATE_ALL_CODEBASE" in options.env) {
         validateAllCodebaseSet = true;
-        validateAllCodebaseValue = "false";
+        validateAllCodebaseValue = options.env["VALIDATE_ALL_CODEBASE"];
       } else {
         validateAllCodebaseSet = false;
         validateAllCodebaseValue = "";
       }
-    } else {
-      await run();
-      result = "success";
-    }
+      
+      return 0; // Success exit code
+    });
+    
+    // Actually call the run function
+    await run();
+    result = "success";
   } catch (error) {
     if (error instanceof Error) result = error.message;
     else result = "Unknown error occurred";
@@ -178,12 +235,28 @@ Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", functi
   assert.strictEqual(
     validateAllCodebaseSet,
     true,
-    "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
+    "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.",
   );
   assert.strictEqual(
     validateAllCodebaseValue,
     "false",
-    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
+    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " + validateAllCodebaseValue,
+  );
+  
+  // Verify that exec was actually called
+  assert.ok(
+    execStub.called,
+    "Expected exec to be called, but it was not.",
+  );
+  
+  // Verify the environment was passed correctly
+  assert.ok(
+    capturedExecOptions,
+    "Expected exec options to be captured, but they were not.",
+  );
+  assert.ok(
+    capturedExecOptions.env,
+    "Expected env to be in exec options, but it was not.",
   );
 });
 
@@ -191,6 +264,12 @@ Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function ()
   assert.strictEqual(
     validateAllCodebaseSet,
     false,
-    "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+    "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " + validateAllCodebaseValue,
+  );
+  
+  // Verify that exec was actually called
+  assert.ok(
+    execStub.called,
+    "Expected exec to be called, but it was not.",
   );
 });
