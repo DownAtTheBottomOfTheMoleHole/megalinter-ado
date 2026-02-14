@@ -31,7 +31,7 @@ Before(function () {
   lintChangedFilesOnlyEnabled = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
-  
+
   // Clean up process.env to prevent order-dependent behavior
   delete process.env["INPUT_CACHEDOCKERIMAGE"];
   delete process.env["INPUT_DOCKERCACHEPATH"];
@@ -90,7 +90,7 @@ When("the run function is called", async function () {
     // Mock by default to avoid executing real Docker/npx commands outside Azure Pipelines
     // Only run real task when explicitly in Azure DevOps (TF_BUILD is set)
     const isAzurePipelines = !!process.env.TF_BUILD;
-    
+
     if (!isAzurePipelines) {
       // Mocked behavior - simulate the task without executing real commands
       result = "success";
@@ -128,7 +128,7 @@ When("the run function is called", async function () {
         await run();
       }
       result = "success";
-      
+
       // In non-mocked runs, read the actual environment set by run()
       const validateAllCodebaseEnv = process.env.VALIDATE_ALL_CODEBASE;
       if (typeof validateAllCodebaseEnv !== "undefined") {
@@ -211,23 +211,29 @@ Then("no docker image tarball should be saved", function () {
   );
 });
 
-Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    true,
-    "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
-  );
-  assert.strictEqual(
-    validateAllCodebaseValue,
-    "false",
-    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should be set to false",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      true,
+      "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
+    );
+    assert.strictEqual(
+      validateAllCodebaseValue,
+      "false",
+      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
+    );
+  },
+);
 
-Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    false,
-    "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should not be set",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      false,
+      "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+    );
+  },
+);

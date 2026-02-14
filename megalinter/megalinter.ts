@@ -378,9 +378,7 @@ export async function run(): Promise<void> {
     if (cacheDockerImage) {
       console.log("Docker image caching is enabled");
       if (tl.exist(dockerCacheTarball)) {
-        console.log(
-          `Loading Docker image from cache: ${dockerCacheTarball}`,
-        );
+        console.log(`Loading Docker image from cache: ${dockerCacheTarball}`);
         const loadTool = tl.tool("docker");
         loadTool.arg(["load", "-i", dockerCacheTarball]);
         const loadCode = await loadTool.exec({
@@ -395,9 +393,7 @@ export async function run(): Promise<void> {
           );
         }
       } else {
-        console.log(
-          `No cached Docker image found at: ${dockerCacheTarball}`,
-        );
+        console.log(`No cached Docker image found at: ${dockerCacheTarball}`);
       }
     }
 
