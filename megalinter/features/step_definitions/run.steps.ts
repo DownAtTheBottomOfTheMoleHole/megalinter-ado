@@ -239,41 +239,41 @@ Then("no docker image tarball should be saved", function () {
   );
 });
 
-Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    true,
-    "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.",
-  );
-  assert.strictEqual(
-    validateAllCodebaseValue,
-    "false",
-    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " +
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should be set to false",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      true,
+      "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.",
+    );
+    assert.strictEqual(
       validateAllCodebaseValue,
-  );
-  assert.ok(
-    npxExecCalled,
-    "Expected npx exec to be called, but it was not.",
-  );
-  assert.ok(
-    capturedExecOptions,
-    "Expected exec options to be captured, but they were not.",
-  );
-  assert.ok(
-    capturedExecOptions.env,
-    "Expected env to be in exec options, but it was not.",
-  );
-});
+      "false",
+      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " +
+        validateAllCodebaseValue,
+    );
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+    assert.ok(
+      capturedExecOptions,
+      "Expected exec options to be captured, but they were not.",
+    );
+    assert.ok(
+      capturedExecOptions.env,
+      "Expected env to be in exec options, but it was not.",
+    );
+  },
+);
 
-Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    false,
-    "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " +
-      validateAllCodebaseValue,
-  );
-  assert.ok(
-    npxExecCalled,
-    "Expected npx exec to be called, but it was not.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should not be set",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      false,
+      "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " +
+        validateAllCodebaseValue,
+    );
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+  },
+);
