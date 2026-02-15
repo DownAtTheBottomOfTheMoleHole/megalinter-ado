@@ -147,15 +147,9 @@
   "instanceNameFormat": "Run Mega-Linter",
   "name": "#{task_name}#",
   "version": {
-    "Major": #{major
-    }#,
-    "Minor": #{minor
-    }#,
-    "Patch": #{patch
-    }#
+    "Major": #{major}#,
+    "Minor": #{minor}#,
+    "Patch": #{patch}#
   },
-  "visibility": [
-    "Build",
-    "Release"
-  ]
+  "visibility": ["Build", "Release"]
 }
