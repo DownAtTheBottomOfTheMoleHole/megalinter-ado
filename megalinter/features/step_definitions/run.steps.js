@@ -1,51 +1,12 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
-const assert = __importStar(require("assert"));
-const sinon = __importStar(require("sinon"));
-const tl = __importStar(require("azure-pipelines-task-lib/task"));
+const assert = require("assert");
+const sinon = require("sinon");
+const tl = require("azure-pipelines-task-lib/task");
 const megalinter_1 = require("../../megalinter");
 let result = null;
 let errorOccurred = false;
-// Docker caching test state
-let dockerImagePulled = false;
-let dockerImageLoadedFromCache = false;
-let dockerImageSavedToCache = false;
-let dockerCacheTarballExists = false;
-let dockerImageAvailable = false;
 // Lint changed files only test state
 let validateAllCodebaseSet = false;
 let validateAllCodebaseValue = "";
@@ -53,34 +14,16 @@ let sandbox;
 let getInputStub;
 let getBoolInputStub;
 let npxExecCalled = false;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions = null;
 (0, cucumber_1.Before)(function () {
     sandbox = sinon.createSandbox();
     capturedExecOptions = null;
     npxExecCalled = false;
-    dockerCacheTarballExists = false;
-    dockerImageAvailable = false;
     sandbox.stub(tl, "tool").callsFake((tool) => {
         const mockToolRunner = {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            arg: sandbox.stub().callsFake((args) => {
-                if (tool === "docker" && Array.isArray(args)) {
-                    if (args.includes("load")) {
-                        dockerImageLoadedFromCache = true;
-                        dockerImageAvailable = true;
-                    }
-                    else if (args.includes("save")) {
-                        dockerImageSavedToCache = true;
-                    }
-                    else if (args.includes("pull")) {
-                        dockerImagePulled = true;
-                        dockerImageAvailable = true;
-                    }
-                }
+            arg: sandbox.stub().callsFake((_args) => {
                 return mockToolRunner;
             }),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             exec: sandbox.stub().callsFake(async (options) => {
                 if (tool === "npx") {
                     capturedExecOptions = options;
@@ -94,26 +37,13 @@ let capturedExecOptions = null;
     sandbox.stub(tl, "setResult");
     sandbox.stub(tl, "getVariable").returns("");
     sandbox.stub(tl, "which").returns("/usr/bin/npx");
-    sandbox.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
+    sandbox.stub(tl, "exist").returns(false);
     sandbox.stub(tl, "mkdirP");
-    sandbox.stub(tl, "execSync").callsFake((tool, args) => {
-        if (tool === "docker" &&
-            Array.isArray(args) &&
-            args.includes("images") &&
-            args.includes("-q")) {
-            return {
-                code: 0,
-                stdout: dockerImageAvailable ? "mock-image-id-12345\n" : "",
-                stderr: "",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                error: undefined,
-            };
-        }
+    sandbox.stub(tl, "execSync").callsFake(() => {
         return {
             code: 0,
             stdout: "",
             stderr: "",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             error: undefined,
         };
     });
@@ -125,9 +55,6 @@ let capturedExecOptions = null;
     getInputStub.withArgs("release").returns("v8");
     result = null;
     errorOccurred = false;
-    dockerImagePulled = false;
-    dockerImageLoadedFromCache = false;
-    dockerImageSavedToCache = false;
     validateAllCodebaseSet = false;
     validateAllCodebaseValue = "";
 });
@@ -140,24 +67,11 @@ let capturedExecOptions = null;
 (0, cucumber_1.Given)("the input parameters are invalid", async function () {
     errorOccurred = true;
 });
-(0, cucumber_1.Given)("docker image caching is enabled", async function () {
-    getBoolInputStub.withArgs("cacheDockerImage").returns(true);
-    getInputStub.withArgs("dockerCachePath").returns("/tmp/test-docker-cache");
-});
-(0, cucumber_1.Given)("docker image caching is disabled", async function () {
-    getBoolInputStub.withArgs("cacheDockerImage").returns(false);
-});
 (0, cucumber_1.Given)("lint changed files only is enabled", async function () {
     getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
 });
 (0, cucumber_1.Given)("lint changed files only is disabled", async function () {
     getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
-});
-(0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
-    dockerCacheTarballExists = false;
-});
-(0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
-    dockerCacheTarballExists = true;
 });
 (0, cucumber_1.When)("the run function is called", async function () {
     try {
@@ -200,21 +114,6 @@ let capturedExecOptions = null;
 });
 (0, cucumber_1.Then)("the function should fail with an error message", function () {
     assert.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
-});
-(0, cucumber_1.Then)("the docker image should be pulled", function () {
-    assert.strictEqual(dockerImagePulled, true, "Expected the Docker image to be pulled, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should be saved to the cache path", function () {
-    assert.strictEqual(dockerImageSavedToCache, true, "Expected the Docker image to be saved to cache, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should be loaded from cache", function () {
-    assert.strictEqual(dockerImageLoadedFromCache, true, "Expected the Docker image to be loaded from cache, but it was not.");
-});
-(0, cucumber_1.Then)("the docker image should not be pulled", function () {
-    assert.strictEqual(dockerImagePulled, false, "Expected the Docker image to not be pulled, but it was.");
-});
-(0, cucumber_1.Then)("no docker image tarball should be saved", function () {
-    assert.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
     assert.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.");

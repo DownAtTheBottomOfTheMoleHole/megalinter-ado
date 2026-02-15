@@ -11,12 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PR comment reporter for Azure DevOps pull requests
 - Auto-fix PR creation when `fix: true` and `createFixPR: true`
-- Built-in Docker image caching via `cacheDockerImage` and `dockerCachePath` inputs (auto `docker load`/`docker save`)
+- Lint only changed files in PRs/commits via `lintChangedFilesOnly` input (sets `VALIDATE_ALL_CODEBASE=false`)
 - Streaming output for real-time linting feedback
 - Configuration file support (`configFile` input)
 - Reports output path configuration (`reportsPath` input)
 - Disable specific linters via `disableLinters` input
-- Lint only changed files in PRs/commits via `lintChangedFilesOnly` input (sets `VALIDATE_ALL_CODEBASE=false`)
 
 ### Changed
 
