@@ -1,6 +1,5 @@
 # MegaLinter Azure DevOps Extension - AI Coding Agent Instructions
 
-
 ```bash
 cd megalinter
 npm run build  # Compiles megalinter.ts → megalinter.js
@@ -20,7 +19,8 @@ Tests are written using Cucumber/BDD:
 - Step definitions: `megalinter/features/step_definitions/*.ts`
 
   );
-}
+  }
+
 ```
 
 This avoids unnecessary pulls when the image is already cached. Preserve this pattern when modifying Docker-related code.
@@ -47,3 +47,4 @@ To test the task locally without publishing:
 3. Run: `node megalinter/megalinter.js`
 
 Note: Local testing requires Docker and appropriate Azure Pipelines environment variables set.
+```
