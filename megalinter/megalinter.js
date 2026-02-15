@@ -38,6 +38,7 @@ exports.run = run;
 const tl = require("azure-pipelines-task-lib/task");
 const https = __importStar(require("https"));
 const http = __importStar(require("http"));
+const path = __importStar(require("path"));
 // PR description template for fix PRs
 const PR_DESCRIPTION_TEMPLATE = `# What?
 
@@ -79,6 +80,28 @@ All fixes have been validated by MegaLinter. Please review the changes to ensure
 
 These are automated fixes. Please review carefully before merging.
 `;
+function resolveDockerCachePath(inputPath) {
+    const defaultPath = `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
+    const candidatePath = inputPath || defaultPath;
+    const resolvedPath = path.resolve(candidatePath);
+    const allowedRoots = [
+        tl.getVariable("Pipeline.Workspace"),
+        tl.getVariable("Agent.TempDirectory"),
+        tl.getVariable("Build.SourcesDirectory"),
+    ].filter((value) => !!value);
+    if (allowedRoots.length === 0) {
+        return resolvedPath;
+    }
+    const isAllowed = allowedRoots.some((root) => {
+        const resolvedRoot = path.resolve(root);
+        return (resolvedPath === resolvedRoot ||
+            resolvedPath.startsWith(resolvedRoot + path.sep));
+    });
+    if (!isAllowed) {
+        throw new Error(`dockerCachePath must be within ${allowedRoots.join(", ")}`);
+    }
+    return resolvedPath;
+}
 /**
  * Creates a pull request in Azure DevOps with the MegaLinter fixes
  */
@@ -213,17 +236,18 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         console.log(`Failed to commit fixes: ${commitResult.stderr}`);
         return;
     }
-    // Push the branch using the System.AccessToken via an HTTP header
-    // to avoid embedding the token in the remote URL or .git/config.
+    // Push the branch using the System.AccessToken via environment variable
+    // to avoid leaking the token in command-line arguments or process listings
+    tl.setSecret(accessToken);
     const extraHeader = `Authorization: Bearer ${accessToken}`;
-    const pushResult = tl.execSync("git", [
-        "-c",
-        `http.extraheader=${extraHeader}`,
-        "push",
-        "-u",
-        "origin",
-        fixBranchName,
-    ], { cwd: workingDir });
+    tl.setSecret(extraHeader);
+    const pushResult = tl.execSync("git", ["push", "-u", "origin", fixBranchName], {
+        cwd: workingDir,
+        env: {
+            ...process.env,
+            GIT_HTTP_EXTRAHEADER: extraHeader,
+        },
+    });
     if (pushResult.code !== 0) {
         console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
@@ -314,8 +338,7 @@ async function run() {
         });
         // Docker image caching configuration
         const cacheDockerImage = tl.getBoolInput("cacheDockerImage");
-        const dockerCachePath = tl.getInput("dockerCachePath") ||
-            `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
+        const dockerCachePath = resolveDockerCachePath(tl.getInput("dockerCachePath") || undefined);
         const flavorForCache = tl.getInput("flavor") || "default";
         const releaseForCache = tl.getInput("release") || "latest";
         const safeFlavorForCache = flavorForCache.replace(/[^a-zA-Z0-9_.-]/g, "_");
