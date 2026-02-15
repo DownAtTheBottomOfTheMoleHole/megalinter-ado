@@ -1,8 +1,8 @@
 import { Given, When, Then, Before, After } from "@cucumber/cucumber";
-import assert from "assert";
+import * as assert from "assert";
 import * as sinon from "sinon";
 import * as tl from "azure-pipelines-task-lib/task";
-import { run } from "../../megalinter"; // Ensure this path is correct
+import { run } from "../../megalinter";
 
 let result: string | null = null;
 let errorOccurred: boolean = false;
@@ -153,15 +153,10 @@ After(function () {
 });
 
 Given("the input parameters are valid", async function () {
-  // Mock valid input parameters if necessary
-  // In CI (GitHub Actions), environment variables provide mock values
-  // In ADO, real values are provided
-  // Just verify we can get the input without error
-  try {
-    tl.getInput("sampleInput", false); // Don't require, just test
-  } catch {
-    // Expected in some environments, that's okay
-  }
+  // Test assumes valid inputs are available through environment variables
+  // In CI, the workflow sets INPUT_* environment variables
+  // We don't need to verify them here as the test is mocked in CI anyway
+  errorOccurred = false;
 });
 
 Given("the input parameters are invalid", async function () {
@@ -291,23 +286,29 @@ Then("no docker image tarball should be saved", function () {
   );
 });
 
-Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    true,
-    "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
-  );
-  assert.strictEqual(
-    validateAllCodebaseValue,
-    "false",
-    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should be set to false",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      true,
+      "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
+    );
+    assert.strictEqual(
+      validateAllCodebaseValue,
+      "false",
+      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
+    );
+  },
+);
 
-Then("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-  assert.strictEqual(
-    validateAllCodebaseSet,
-    false,
-    "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
-  );
-});
+Then(
+  "VALIDATE_ALL_CODEBASE environment variable should not be set",
+  function () {
+    assert.strictEqual(
+      validateAllCodebaseSet,
+      false,
+      "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+    );
+  },
+);

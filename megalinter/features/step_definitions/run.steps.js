@@ -32,15 +32,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
-const assert_1 = __importDefault(require("assert"));
+const assert = __importStar(require("assert"));
 const sinon = __importStar(require("sinon"));
 const tl = __importStar(require("azure-pipelines-task-lib/task"));
-const megalinter_1 = require("../../megalinter"); // Ensure this path is correct
+const megalinter_1 = require("../../megalinter");
 let result = null;
 let errorOccurred = false;
 // Lint changed files only test state
@@ -168,16 +165,10 @@ let capturedExecOptions = null;
     capturedExecOptions = null;
 });
 (0, cucumber_1.Given)("the input parameters are valid", async function () {
-    // Mock valid input parameters if necessary
-    // In CI (GitHub Actions), environment variables provide mock values
-    // In ADO, real values are provided
-    // Just verify we can get the input without error
-    try {
-        tl.getInput("sampleInput", false); // Don't require, just test
-    }
-    catch {
-        // Expected in some environments, that's okay
-    }
+    // Test assumes valid inputs are available through environment variables
+    // In CI, the workflow sets INPUT_* environment variables
+    // We don't need to verify them here as the test is mocked in CI anyway
+    errorOccurred = false;
 });
 (0, cucumber_1.Given)("the input parameters are invalid", async function () {
     // Mock invalid input parameters or set error flag directly
@@ -246,30 +237,30 @@ let capturedExecOptions = null;
     }
 });
 (0, cucumber_1.Then)("the function should execute successfully", function () {
-    assert_1.default.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
+    assert.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
 });
 (0, cucumber_1.Then)("the function should fail with an error message", function () {
-    assert_1.default.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
+    assert.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
 });
 (0, cucumber_1.Then)("the docker image should be pulled", function () {
-    assert_1.default.strictEqual(dockerImagePulled, true, "Expected the Docker image to be pulled, but it was not.");
+    assert.strictEqual(dockerImagePulled, true, "Expected the Docker image to be pulled, but it was not.");
 });
 (0, cucumber_1.Then)("the docker image should be saved to the cache path", function () {
-    assert_1.default.strictEqual(dockerImageSavedToCache, true, "Expected the Docker image to be saved to cache, but it was not.");
+    assert.strictEqual(dockerImageSavedToCache, true, "Expected the Docker image to be saved to cache, but it was not.");
 });
 (0, cucumber_1.Then)("the docker image should be loaded from cache", function () {
-    assert_1.default.strictEqual(dockerImageLoadedFromCache, true, "Expected the Docker image to be loaded from cache, but it was not.");
+    assert.strictEqual(dockerImageLoadedFromCache, true, "Expected the Docker image to be loaded from cache, but it was not.");
 });
 (0, cucumber_1.Then)("the docker image should not be pulled", function () {
-    assert_1.default.strictEqual(dockerImagePulled, false, "Expected the Docker image to not be pulled, but it was.");
+    assert.strictEqual(dockerImagePulled, false, "Expected the Docker image to not be pulled, but it was.");
 });
 (0, cucumber_1.Then)("no docker image tarball should be saved", function () {
-    assert_1.default.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
+    assert.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
-    assert_1.default.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
-    assert_1.default.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
+    assert.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.");
+    assert.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.");
 });
 (0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
-    assert_1.default.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
+    assert.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.");
 });
