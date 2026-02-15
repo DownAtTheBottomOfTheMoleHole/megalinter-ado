@@ -222,20 +222,18 @@ async function handleFixPullRequest(
     return;
   }
 
-  // Push the branch using the System.AccessToken via an HTTP header
-  // to avoid embedding the token in the remote URL or .git/config.
-  const extraHeader = `Authorization: Bearer ${accessToken}`;
+  // Push the branch using the System.AccessToken via environment variable
+  // to avoid leaking the token in command-line arguments or process listings
   const pushResult = tl.execSync(
     "git",
-    [
-      "-c",
-      `http.extraheader=${extraHeader}`,
-      "push",
-      "-u",
-      "origin",
-      fixBranchName,
-    ],
-    { cwd: workingDir },
+    ["push", "-u", "origin", fixBranchName],
+    {
+      cwd: workingDir,
+      env: {
+        ...process.env,
+        GIT_HTTP_EXTRAHEADER: `Authorization: Bearer ${accessToken}`,
+      },
+    },
   );
 
   if (pushResult.code !== 0) {
