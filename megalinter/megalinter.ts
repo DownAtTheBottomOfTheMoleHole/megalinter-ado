@@ -3,6 +3,7 @@ import tl = require("azure-pipelines-task-lib/task");
 import tr = require("azure-pipelines-task-lib/toolrunner");
 import * as https from "https";
 import * as http from "http";
+import * as path from "path";
 
 // PR description template for fix PRs
 const PR_DESCRIPTION_TEMPLATE = `# What?
@@ -281,6 +282,76 @@ async function handleFixPullRequest(
   );
 }
 
+/**
+ * Validates and sanitizes the Docker cache path to prevent security issues
+ * @param cachePath The cache path to validate
+ * @returns A validated and normalized absolute path, or null if invalid
+ */
+function validateDockerCachePath(cachePath: string): string | null {
+  if (!cachePath || typeof cachePath !== "string") {
+    return null;
+  }
+
+  // Check for path traversal attempts BEFORE normalization
+  // Only match ".." as a path segment (not as part of a directory name like "my..folder")
+  if (/(^|[/\\])\.\.([/\\]|$)/.test(cachePath)) {
+    console.warn(
+      `⚠️ Invalid Docker cache path: contains path traversal sequence: ${cachePath}`,
+    );
+    return null;
+  }
+
+  // Normalize the path to resolve any relative components (e.g., ".", redundant slashes)
+  const normalizedPath = path.normalize(cachePath);
+
+  // Get Azure DevOps variables
+  const workspace = tl.getVariable("Pipeline.Workspace");
+  const sourcesDirectory = tl.getVariable("Build.SourcesDirectory");
+  const agentTempDirectory = tl.getVariable("Agent.TempDirectory");
+
+  // Ensure the path is absolute or make it relative to a safe location
+  // Azure DevOps variables like $(Pipeline.Workspace) are already absolute
+  let absolutePath: string;
+  if (path.isAbsolute(normalizedPath)) {
+    absolutePath = normalizedPath;
+  } else {
+    // Make relative paths relative to Pipeline.Workspace or a safe default
+    const safeBase = workspace || "/tmp";
+    absolutePath = path.join(safeBase, normalizedPath);
+  }
+
+  // Additional validation: ensure path is within expected boundaries
+  // Allow paths under workspace, sources directory, temp directory, or /tmp
+  const allowedPrefixes = [
+    workspace,
+    sourcesDirectory,
+    agentTempDirectory,
+    "/tmp",
+  ].filter((p) => p) as string[];
+
+  const isWithinAllowedPath = allowedPrefixes.some((prefix) => {
+    const relative = path.relative(prefix, absolutePath);
+    // Path is contained if the relative path doesn't start with ".." and is not absolute
+    return (
+      relative !== "" &&
+      !relative.startsWith("..") &&
+      !path.isAbsolute(relative)
+    );
+  });
+
+  if (!isWithinAllowedPath) {
+    console.warn(
+      `⚠️ Docker cache path is outside allowed directories: ${absolutePath}`,
+    );
+    console.warn(
+      `   Allowed prefixes: ${allowedPrefixes.join(", ")}`,
+    );
+    return null;
+  }
+
+  return absolutePath;
+}
+
 // Define an asynchronous function named 'run' with a return type of Promise<void>
 export async function run(): Promise<void> {
   try {
@@ -361,6 +432,71 @@ export async function run(): Promise<void> {
       }
     });
 
+    // Docker image caching configuration
+    const cacheDockerImage = tl.getBoolInput("cacheDockerImage");
+    let dockerCachePath: string | null = null;
+    let dockerCacheTarball: string | null = null;
+
+    if (cacheDockerImage) {
+      const dockerCachePathInput =
+        tl.getInput("dockerCachePath") ||
+        `${tl.getVariable("Pipeline.Workspace") || "/tmp"}/docker-cache`;
+
+      // Validate and sanitize the cache path
+      dockerCachePath = validateDockerCachePath(dockerCachePathInput);
+      if (!dockerCachePath) {
+        tl.setResult(
+          tl.TaskResult.Failed,
+          `Invalid Docker cache path: ${dockerCachePathInput}. Path must be within allowed directories (Pipeline.Workspace, Build.SourcesDirectory, Agent.TempDirectory, or /tmp) and must not contain path traversal sequences.`,
+        );
+        return;
+      }
+
+      // Use a tarball name that is specific to the MegaLinter image (flavor + release)
+      const flavorForCache = (tl.getInput("flavor") || "all").replace(
+        /[^a-zA-Z0-9_.-]/g,
+        "-",
+      );
+      const releaseForCache = (tl.getInput("release") || "latest").replace(
+        /[^a-zA-Z0-9_.-]/g,
+        "-",
+      );
+      dockerCacheTarball = path.join(
+        dockerCachePath,
+        `megalinter-${flavorForCache}-${releaseForCache}.tar`,
+      );
+    }
+
+    // If caching is enabled, attempt to load the Docker image from a cached tarball
+    if (cacheDockerImage && dockerCacheTarball) {
+      console.log("Docker image caching is enabled");
+      if (tl.exist(dockerCacheTarball)) {
+        console.log(
+          `Loading Docker image from cache: ${dockerCacheTarball}`,
+        );
+        const loadTool = tl.tool("docker");
+        loadTool.arg(["load", "-i", dockerCacheTarball]);
+        const loadCode = await loadTool.exec({
+          failOnStdErr: false,
+          silent: false,
+        } as tr.IExecOptions);
+        if (loadCode === 0) {
+          console.log("✅ Docker image loaded from cache successfully");
+        } else {
+          console.log(
+            "⚠️ Failed to load Docker image from cache, will pull instead",
+          );
+        }
+      } else {
+        console.log(
+          `No cached Docker image found at: ${dockerCacheTarball}`,
+        );
+      }
+    }
+
+    // Track if image was freshly pulled (for cache save decision)
+    let imageWasPulled = false;
+
     // Check if the Docker image is already available in the local Docker cache
     // This helps with caching when using self-hosted agents or Docker layer caching
     const dockerImageCheck = tl.execSync("docker", [
@@ -392,6 +528,26 @@ export async function run(): Promise<void> {
         return;
       }
       console.log("Docker image pulled successfully.");
+      imageWasPulled = true;
+    }
+
+    // Save the Docker image to cache tarball for future runs
+    if (cacheDockerImage && imageWasPulled && dockerCacheTarball && dockerCachePath) {
+      console.log(`Saving Docker image to cache: ${dockerCacheTarball}`);
+      tl.mkdirP(dockerCachePath);
+      const saveTool = tl.tool("docker");
+      saveTool.arg(["save", "-o", dockerCacheTarball, dockerImageName]);
+      const saveCode = await saveTool.exec({
+        failOnStdErr: false,
+        silent: false,
+      } as tr.IExecOptions);
+      if (saveCode === 0) {
+        console.log("✅ Docker image saved to cache successfully");
+      } else {
+        console.log(
+          "⚠️ Failed to save Docker image to cache (non-fatal, continuing)",
+        );
+      }
     }
 
     // Execute mega-linter-runner via npx with streaming output

@@ -12,6 +12,14 @@ let errorOccurred: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
+// Docker caching test state
+let dockerLoadCalled: boolean = false;
+let dockerPullCalled: boolean = false;
+let dockerSaveCalled: boolean = false;
+let dockerLoadShouldFail: boolean = false;
+let dockerImageExistsInDaemon: boolean = false;
+let cacheFileExists: boolean = false;
+
 let sandbox: sinon.SinonSandbox;
 let getInputStub: sinon.SinonStub;
 let getBoolInputStub: sinon.SinonStub;
@@ -24,10 +32,25 @@ Before(function () {
   capturedExecOptions = null;
   npxExecCalled = false;
 
+  // Reset docker caching state
+  dockerLoadCalled = false;
+  dockerPullCalled = false;
+  dockerSaveCalled = false;
+  dockerLoadShouldFail = false;
+  dockerImageExistsInDaemon = false;
+  cacheFileExists = false;
+
   sandbox.stub(tl, "tool").callsFake((tool: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let collectedArgs: any[] = [];
     const mockToolRunner = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      arg: sandbox.stub().callsFake((_args: any) => {
+      arg: sandbox.stub().callsFake((args: any) => {
+        if (Array.isArray(args)) {
+          collectedArgs = collectedArgs.concat(args);
+        } else {
+          collectedArgs.push(args);
+        }
         return mockToolRunner;
       }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,6 +58,18 @@ Before(function () {
         if (tool === "npx") {
           capturedExecOptions = options;
           npxExecCalled = true;
+        }
+        if (tool === "docker") {
+          if (collectedArgs.includes("load")) {
+            dockerLoadCalled = true;
+            if (dockerLoadShouldFail) return 1;
+          }
+          if (collectedArgs.includes("pull")) {
+            dockerPullCalled = true;
+          }
+          if (collectedArgs.includes("save")) {
+            dockerSaveCalled = true;
+          }
         }
         return 0;
       }),
@@ -44,20 +79,49 @@ Before(function () {
   });
 
   sandbox.stub(tl, "setResult");
-  sandbox.stub(tl, "getVariable").returns("");
+
+  const getVariableStub = sandbox.stub(tl, "getVariable");
+  getVariableStub.returns("");
+  getVariableStub.withArgs("Pipeline.Workspace").returns("/tmp/test-workspace");
+  getVariableStub
+    .withArgs("Build.SourcesDirectory")
+    .returns("/tmp/test-source");
+  getVariableStub.withArgs("Agent.TempDirectory").returns("/tmp/test-temp");
+
   sandbox.stub(tl, "which").returns("/usr/bin/npx");
-  sandbox.stub(tl, "exist").returns(false);
+
+  sandbox.stub(tl, "exist").callsFake((itemPath: string) => {
+    if (itemPath.endsWith(".tar")) return cacheFileExists;
+    return false;
+  });
+
   sandbox.stub(tl, "mkdirP");
 
-  sandbox.stub(tl, "execSync").callsFake(() => {
-    return {
-      code: 0,
-      stdout: "",
-      stderr: "",
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      error: undefined as any,
-    };
-  });
+  sandbox.stub(tl, "execSync").callsFake(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (tool: string, args: any) => {
+      if (
+        tool === "docker" &&
+        Array.isArray(args) &&
+        args[0] === "images"
+      ) {
+        return {
+          code: 0,
+          stdout: dockerImageExistsInDaemon ? "abc123\n" : "",
+          stderr: "",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          error: undefined as any,
+        };
+      }
+      return {
+        code: 0,
+        stdout: "",
+        stderr: "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: undefined as any,
+      };
+    },
+  );
 
   getInputStub = sandbox.stub(tl, "getInput");
   getBoolInputStub = sandbox.stub(tl, "getBoolInput");
@@ -182,3 +246,79 @@ Then(
     assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
   },
 );
+
+Given("docker image caching is enabled", async function () {
+  getBoolInputStub.withArgs("cacheDockerImage").returns(true);
+  getInputStub
+    .withArgs("dockerCachePath")
+    .returns("/tmp/test-workspace/docker-cache");
+});
+
+Given("a cached docker image tarball exists", async function () {
+  cacheFileExists = true;
+  dockerImageExistsInDaemon = true;
+});
+
+Given("docker image caching is disabled", async function () {
+  getBoolInputStub.withArgs("cacheDockerImage").returns(false);
+});
+
+Then("the docker image should be saved to the cache path", function () {
+  assert.strictEqual(
+    dockerSaveCalled,
+    true,
+    "Expected the Docker image to be saved to cache, but it was not.",
+  );
+});
+
+Then("the docker image should be loaded from cache", function () {
+  assert.strictEqual(
+    dockerLoadCalled,
+    true,
+    "Expected the Docker image to be loaded from cache, but it was not.",
+  );
+});
+
+Then("the docker image should not be pulled", function () {
+  assert.strictEqual(
+    dockerPullCalled,
+    false,
+    "Expected the Docker image to not be pulled, but it was.",
+  );
+});
+
+Then("the docker image should be pulled", function () {
+  assert.strictEqual(
+    dockerPullCalled,
+    true,
+    "Expected the Docker image to be pulled, but it was not.",
+  );
+});
+
+Then("no docker image tarball should be saved", function () {
+  assert.strictEqual(
+    dockerSaveCalled,
+    false,
+    "Expected no Docker image tarball to be saved, but one was.",
+  );
+});
+
+Given(
+  "a cached docker image tarball exists but is corrupted",
+  async function () {
+    cacheFileExists = true;
+    dockerLoadShouldFail = true;
+  },
+);
+
+Given("the docker image exists locally", async function () {
+  dockerImageExistsInDaemon = true;
+});
+
+Then("the cache load should fail with a warning", function () {
+  assert.strictEqual(
+    dockerLoadCalled,
+    true,
+    "Expected docker load to be called, but it was not.",
+  );
+});
