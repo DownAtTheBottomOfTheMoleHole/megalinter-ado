@@ -255,7 +255,8 @@ function validateDockerCachePath(cachePath) {
         return null;
     }
     // Check for path traversal attempts BEFORE normalization
-    if (cachePath.includes("..")) {
+    // Only match ".." as a path segment (not as part of a directory name like "my..folder")
+    if (/(^|[/\\])\.\.([/\\]|$)/.test(cachePath)) {
         console.warn(`⚠️ Invalid Docker cache path: contains path traversal sequence: ${cachePath}`);
         return null;
     }
@@ -284,7 +285,13 @@ function validateDockerCachePath(cachePath) {
         agentTempDirectory,
         "/tmp",
     ].filter((p) => p);
-    const isWithinAllowedPath = allowedPrefixes.some((prefix) => absolutePath.startsWith(prefix));
+    const isWithinAllowedPath = allowedPrefixes.some((prefix) => {
+        const relative = path.relative(prefix, absolutePath);
+        // Path is contained if the relative path doesn't start with ".." and is not absolute
+        return (relative !== "" &&
+            !relative.startsWith("..") &&
+            !path.isAbsolute(relative));
+    });
     if (!isWithinAllowedPath) {
         console.warn(`⚠️ Docker cache path is outside allowed directories: ${absolutePath}`);
         console.warn(`   Allowed prefixes: ${allowedPrefixes.join(", ")}`);
