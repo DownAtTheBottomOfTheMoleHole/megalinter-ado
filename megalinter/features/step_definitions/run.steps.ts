@@ -1,144 +1,173 @@
-import { Given, When, Then, Before } from "@cucumber/cucumber";
+import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import * as assert from "assert";
+import * as sinon from "sinon";
+import * as tl from "azure-pipelines-task-lib/task";
+import * as tr from "azure-pipelines-task-lib/toolrunner";
+import { run } from "../../megalinter";
 
 let result: string | null = null;
 let errorOccurred: boolean = false;
 
 // Docker caching test state
-let dockerCacheEnabled: boolean = false;
-let dockerCacheTarballExists: boolean = false;
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
+let dockerCacheTarballExists: boolean = false;
+let dockerImageAvailable: boolean = false;
 
 // Lint changed files only test state
-let lintChangedFilesOnlyEnabled: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
-// Lazy import for run function - only imported if needed in Azure Pipelines
-let run: (() => Promise<void>) | null = null;
+let sandbox: sinon.SinonSandbox;
+let getInputStub: sinon.SinonStub;
+let getBoolInputStub: sinon.SinonStub;
+let npxExecCalled: boolean = false;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let capturedExecOptions: any = null;
 
-// Reset state before each scenario
 Before(function () {
+  sandbox = sinon.createSandbox();
+  capturedExecOptions = null;
+  npxExecCalled = false;
+  dockerCacheTarballExists = false;
+  dockerImageAvailable = false;
+
+  sandbox.stub(tl, "tool").callsFake((tool: string) => {
+    const mockToolRunner = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      arg: sandbox.stub().callsFake((args: any) => {
+        if (tool === "docker" && Array.isArray(args)) {
+          if (args.includes("load")) {
+            dockerImageLoadedFromCache = true;
+            dockerImageAvailable = true;
+          } else if (args.includes("save")) {
+            dockerImageSavedToCache = true;
+          } else if (args.includes("pull")) {
+            dockerImagePulled = true;
+            dockerImageAvailable = true;
+          }
+        }
+        return mockToolRunner;
+      }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      exec: sandbox.stub().callsFake(async (options: any) => {
+        if (tool === "npx") {
+          capturedExecOptions = options;
+          npxExecCalled = true;
+        }
+        return 0;
+      }),
+    };
+
+    return mockToolRunner as unknown as tr.ToolRunner;
+  });
+
+  sandbox.stub(tl, "setResult");
+  sandbox.stub(tl, "getVariable").returns("");
+  sandbox.stub(tl, "which").returns("/usr/bin/npx");
+  sandbox.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
+  sandbox.stub(tl, "mkdirP");
+
+  sandbox.stub(tl, "execSync").callsFake((tool: string, args?: unknown) => {
+    if (
+      tool === "docker" &&
+      Array.isArray(args) &&
+      args.includes("images") &&
+      args.includes("-q")
+    ) {
+      return {
+        code: 0,
+        stdout: dockerImageAvailable ? "mock-image-id-12345\n" : "",
+        stderr: "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: undefined as any,
+      };
+    }
+
+    return {
+      code: 0,
+      stdout: "",
+      stderr: "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      error: undefined as any,
+    };
+  });
+
+  getInputStub = sandbox.stub(tl, "getInput");
+  getBoolInputStub = sandbox.stub(tl, "getBoolInput");
+
+  getInputStub.returns("");
+  getBoolInputStub.returns(false);
+
+  getInputStub.withArgs("flavor").returns("javascript");
+  getInputStub.withArgs("release").returns("v8");
+
   result = null;
   errorOccurred = false;
-  dockerCacheEnabled = false;
-  dockerCacheTarballExists = false;
   dockerImagePulled = false;
   dockerImageLoadedFromCache = false;
   dockerImageSavedToCache = false;
-  lintChangedFilesOnlyEnabled = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
+});
 
-  // Clean up process.env to prevent order-dependent behavior
-  delete process.env["INPUT_CACHEDOCKERIMAGE"];
-  delete process.env["INPUT_DOCKERCACHEPATH"];
-  delete process.env["INPUT_LINTCHANGEDFILESONLY"];
-  delete process.env["VALIDATE_ALL_CODEBASE"];
+After(function () {
+  sandbox.restore();
 });
 
 Given("the input parameters are valid", async function () {
-  // Test assumes valid inputs are available through environment variables
-  // In CI, the workflow sets INPUT_* environment variables
-  // We don't need to verify them here as the test is mocked in CI anyway
   errorOccurred = false;
 });
 
 Given("the input parameters are invalid", async function () {
-  // Mock invalid input parameters or set error flag directly
   errorOccurred = true;
 });
 
 Given("docker image caching is enabled", async function () {
-  dockerCacheEnabled = true;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
-  process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
+  getBoolInputStub.withArgs("cacheDockerImage").returns(true);
+  getInputStub.withArgs("dockerCachePath").returns("/tmp/test-docker-cache");
 });
 
 Given("docker image caching is disabled", async function () {
-  dockerCacheEnabled = false;
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
-  delete process.env["INPUT_DOCKERCACHEPATH"];
+  getBoolInputStub.withArgs("cacheDockerImage").returns(false);
 });
 
 Given("lint changed files only is enabled", async function () {
-  lintChangedFilesOnlyEnabled = true;
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
 });
 
 Given("lint changed files only is disabled", async function () {
-  lintChangedFilesOnlyEnabled = false;
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
 });
 
 Given("no cached docker image tarball exists", async function () {
   dockerCacheTarballExists = false;
-  // Ensure the cache directory/file does not exist for the test
 });
 
 Given("a cached docker image tarball exists", async function () {
   dockerCacheTarballExists = true;
-  // In a real test environment, a mock tarball would be placed at the cache path
-  // For CI testing, we simulate the behavior
 });
 
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    // Mock by default to avoid executing real Docker/npx commands outside Azure Pipelines
-    // Only run real task when explicitly in Azure DevOps (TF_BUILD is set)
-    const isAzurePipelines = !!process.env.TF_BUILD;
 
-    if (!isAzurePipelines) {
-      // Mocked behavior - simulate the task without executing real commands
-      result = "success";
-      // Simulate docker caching behavior for test assertions
-      if (dockerCacheEnabled) {
-        if (dockerCacheTarballExists) {
-          dockerImageLoadedFromCache = true;
-          dockerImagePulled = false;
-          dockerImageSavedToCache = false;
-        } else {
-          dockerImageLoadedFromCache = false;
-          dockerImagePulled = true;
-          dockerImageSavedToCache = true;
-        }
-      } else {
-        dockerImagePulled = true;
-        dockerImageSavedToCache = false;
-      }
-      // Simulate lintChangedFilesOnly behavior for test assertions
-      if (lintChangedFilesOnlyEnabled) {
-        validateAllCodebaseSet = true;
-        validateAllCodebaseValue = "false";
-      } else {
-        validateAllCodebaseSet = false;
-        validateAllCodebaseValue = "";
-      }
-    } else {
-      // Only import and run in actual Azure DevOps environment
-      // Lazy load to avoid import errors in mocked environments
-      if (!run) {
-        const module = await import("../../megalinter");
-        run = module.run;
-      }
-      if (run) {
-        await run();
-      }
-      result = "success";
+    await run();
 
-      // In non-mocked runs, read the actual environment set by run()
-      const validateAllCodebaseEnv = process.env.VALIDATE_ALL_CODEBASE;
-      if (typeof validateAllCodebaseEnv !== "undefined") {
+    if (capturedExecOptions && capturedExecOptions.env) {
+      const env = capturedExecOptions.env;
+
+      if ("VALIDATE_ALL_CODEBASE" in env) {
         validateAllCodebaseSet = true;
-        validateAllCodebaseValue = validateAllCodebaseEnv;
+        validateAllCodebaseValue = env["VALIDATE_ALL_CODEBASE"];
       } else {
         validateAllCodebaseSet = false;
         validateAllCodebaseValue = "";
       }
     }
+
+    result = "success";
   } catch (error) {
     if (error instanceof Error) result = error.message;
     else result = "Unknown error occurred";
@@ -147,7 +176,6 @@ When("the run function is called", async function () {
 
 When("the run function is called with a failing command", async function () {
   try {
-    // Simulate a failing command scenario
     throw new Error("Test error");
   } catch (error) {
     if (error instanceof Error) result = error.message;
@@ -211,21 +239,28 @@ Then("no docker image tarball should be saved", function () {
   );
 });
 
-Then(
-  "VALIDATE_ALL_CODEBASE environment variable should be set to false",
-  function () {
-    assert.strictEqual(
-      validateAllCodebaseSet,
-      true,
-      "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
-    );
-    assert.strictEqual(
+Then("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
+  assert.strictEqual(
+    validateAllCodebaseSet,
+    true,
+    "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.",
+  );
+  assert.strictEqual(
+    validateAllCodebaseValue,
+    "false",
+    "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " +
       validateAllCodebaseValue,
-      "false",
-      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
-    );
-  },
-);
+  );
+  assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+  assert.ok(
+    capturedExecOptions,
+    "Expected exec options to be captured, but they were not.",
+  );
+  assert.ok(
+    capturedExecOptions.env,
+    "Expected env to be in exec options, but it was not.",
+  );
+});
 
 Then(
   "VALIDATE_ALL_CODEBASE environment variable should not be set",
@@ -233,7 +268,9 @@ Then(
     assert.strictEqual(
       validateAllCodebaseSet,
       false,
-      "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+      "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " +
+        validateAllCodebaseValue,
     );
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
   },
 );
