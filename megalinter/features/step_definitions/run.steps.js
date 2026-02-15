@@ -34,6 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const cucumber_1 = require("@cucumber/cucumber");
+const assert = __importStar(require("assert"));
 const sinon = __importStar(require("sinon"));
 const tl = __importStar(require("azure-pipelines-task-lib/task"));
 const megalinter_1 = require("../../megalinter");
@@ -51,243 +52,180 @@ let dockerImageAvailable = false;
 let sandbox;
 let getInputStub;
 let getBoolInputStub;
-let existStub;
 let npxExecCalled = false;
-from;
-"assert";
-impisimport * as;
-sinon;
-from;
-"sinon";
-leimport * as;
-tl;
-from;
-"azure-pip";
-timport;
-{
-    megalinter_1.run;
-}
-from;
-"../tring) => {;
-const mockToo;
-let result = null;
-letxt - let;
-errorOccurred: boolean = falci;
-// Lint changed files only test sllslet validateAllCodebaseSet: boolean ollet validateAllCodebaseValue: string = "";
-// Docker caching test state
-let dockerI, let, dockerImagePulled, let;
-do
-    ;
-while (dockerImageAvailablelet);
-dockerImageSavedToCache: boolean = false;
-lvelet;
-dockerCacheTarballExists: boolean = falstrlet;
-dockerImageAvailable: boolean = false;
-l;
-let sandbox;
-let get, let, getInputStub, tlet, getBoolInputStub;
-let existStub;
-let n, let, npxExecCalled = fyp; // esliimport { Given, When, Then,  import * as assert from "assert";
-Opimport * ations;
-npxEximport * as;
-sinon;
-from;
-" };
-return 0;
-impisimport * as;
-sinon;
-from;
-"sneleimport * as tl from ";
-azure - pip;
-"tisu    const mockToo;
-let result = null;
-letxt - let;
-errorOtllet;
-result: sturnsletxt - let;
-errorOccurred: booleansa; // Li.stub(tl, "exist").callsFake(() => d  
-// Docker caching test state
-let dockerI, let, dockerImagePulled, let;
-do
-    ;
-while (dockerImageAvailablegs / );
-let dockerI, let, dockerIma, dockerImageAvailablelet, dockerImageSa;
-lvelet;
-dockerCacheTarballExists: boolean = falstrlet;
-dockerImageAvailable: brn;
-l;
-let sandbox;
-let get, let, getInputStub, tlet, getBo, le, let, get, let, getInputStub, r, let, existStub;
-let n, let, npxExecCalled;
-let n, let, npxExecCalandbox, stub;
-(tl, "geimport * as sinon from ");
-sinon;
-";;
-Opimport * ations;
-nptSimporeturns(false);
-getInputSOpimport * ations;
-npxEximport;
-t;
-")          npxEximwi        return 0;;
-impisimport;
-lt;
-impisiOcimpisimp;
-flet;
-result: string | null;
-null;
-letxt - let;
-errorOtllet;
-result: sturnsletxt - lekerImageSletxt - let;
-errorOtllet;
-result: stll; // Docker caching test state
-let dockerI, let, dockerImagePulled, let;
-do
-    ;
-while (dockerImageAvailablethlet);
-dockerI;
-let dockerImad;
-"            dockerImageAvailablegs/: let dockerI ;;
-lvelet;
-dockerCacheTarballExists: boolean = falstrlet;
-dockerImageAvailable: brn;
-l;
-let sandbox;
-let sandbox;
-let get, lettStub, withArgs;
-("cacheDockerImage");
-let get, let, getInputStub, n, let, npxExecCalled;
-let n, let, npxExecCalandbox, stub;
-(tl, "geimport * as sinon from ");
-sinon;
-";;
-Opimport * ations;
-nptSimporeturns(false);
-naOpimport * atiunction();
-{
-    getBoolInputStu;
-    nptSimpha;
-    getInputSOpimport * ations;
-    ;
-    npxEximport;
-    t;
-    ")   nl      }),;
-    impisimport;
-    lt;
-}
-impisiOcimpisimp;
-flet;
-resurgs("lintChaimpisiOcimpisimp flet s(letxt-let errorven(", no, cached, docker, image, tarball, elet, dockerI, let, dockerImagePulled, boole, let);
-do
-    ;
-while (dockerImageAvailablethlet);
-dockerI;
-let dockerImad;
-" a            dockerImageAvailablethlet dockerI   lru lvelet dockerCacheTarballExists: boolean = falstrlet dockerImageAvailable: brn;
-l;
-let sandbox;
-let sandbox;
-let sandbox;
-let gnslenvlet, sandbox;
-lOplet;
-get;
-lettStub.withArgs("ca_Aimport * a==import * as sinogeimport * a==import * as sinon from ", sinon, ";, Opimport * ations);
-nptSimporeturns(false);
-naOpimport * atiunctionidateAllCodebaseSet;
-false;
-Opimport * ations;
-nptSimporeturns(false);
-naOpimport * aties;
-nptSimpro;
-naOpimport * atiunction();
-Error;
-getBoolInputStu;
-np;
-e;
-getInputSOpimnknown;
-error;
-occurred;
-" );;
-npxEximport;
-t;
-"ct  n impisimport lt      }),;
-impisiOcimpisincimpisiOcimpisimp;
-flet;
-dockerImageAvailablethlet;
-dockerI;
-let dockerImad;
-" a            dockerImageAvailablethlet dockerI   lru lvelet dockerCacheTarballExists: boolean = falThl));
-let sandbox;
-let sandbox;
-let sandbox;
-let gnslenvlet, sandbox;
-lOplet;
-get;
-lettStub.withArgs("ca_Aimport (", the, let, sandbox, ("docker image cachorlet sandbox: sinon.SinonSandbox;), lstlet, gnsle(result, "Test lOplet get   lettStub.withArgs(", cn, to, fail, wOpimport * ations));
-nptSimporeturns(false);
-naOpimport * atiunctionidateAllCodebaseSet;
-false;
-(nptSimpct);
-naOpimport * atiunctionidateA;
-tOpimport * ations;
-nptSimporeturns(false);
-t.;
-",;
-;
-naOpimport * aties;
-nld;
-naOpimport * atiunction();
-Error;
-ge();
-npxEximport;
-t;
-"ct  n impisimport lt      }),;
-impisiOcimpisincimpisiOcimpisimp;
-flet;
-edimpisiOcimpisincimpisiOcimpisimp;
-;
-(0, cucumber_1.Then)("the docke             dockerImageAvailablethle flet sandbox: (", docker, image, esl);
-let sandbox;
-let sandbox;
-let gnslenvlet, sandbox;
-lOplet;
-get;
-lettStubhelet;
-sandboage;
-should;
-not;
-be;
-pulledlet;
-sandbox: sinon.SinonSandbox;
-lualet;
-gnslockerImagePulled,
-    fallOplet;
-get;
-lettStub.withArgs("ca_Aimportbelstlet gnsle(, result, "Test lOplet get   lettStub.withArgs(", cn, to, fail, wOpimport * ations);
-nptSil(result, ma, "Test ac          nptSimporeturns(false);, naOpimport * all, to, be, saved, but, one, naOpimport * atiunctionidateA_AL(nptSimpct, naOpimport * atiunctionidatese, naOpimport * atiunss, nptSimporeturns(false)));
-t.;
-",;
-ue;
-;
-naOpimport * aties;
-ASE;
-to;
-be;
-set;
-i;
-he;
-impisiOcimpisincimpisiOcimpisimp;
-flet;
-edimpisiOcimpisincimpisiOcimpisimp;
-;
-(0, cucumber_1.Then)("the docke             dockerIte           edimpisiOcimpisincimpisiOc'f});, (0, cucumber_1.Then)("the docke             dockerImageAas, Talulet, sandbox, ("docker image cachl))), let, sandbox, sinon.SinonSandbox));
-let gnslenvlet, sas, let, sandbox, capturelet, gnslenvlet, sandbox, lOplet, get, lettStubhelet, sandboage, shoul;
-",lualet gnslockerImagePulled,;
-fallOplet;
-get;
-lettStub.withArgs("ca_Aimportbelstlet g b    fallOplet get   lettStuTh    result,, "Test lOplet get   lettStub.withArgs(", cn, to, fait, "    ", Test(nptSil(result, ma, "Test ac          nptSimporeturns(faxpma    ", Test, ac, npt, t, naOpimport * all, to, be, saved, but, one, naOp, b, naOpimport * atiunctionidateA_AL(All, naOpimport * atiunctionida.ok(npxExecCalled, ue)))));
-naOpimport * aties;
-it;
-was;
-not.;
-",;
-;
-;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let capturedExecOptions = null;
+(0, cucumber_1.Before)(function () {
+    sandbox = sinon.createSandbox();
+    capturedExecOptions = null;
+    npxExecCalled = false;
+    dockerCacheTarballExists = false;
+    dockerImageAvailable = false;
+    sandbox.stub(tl, "tool").callsFake((tool) => {
+        const mockToolRunner = {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            arg: sandbox.stub().callsFake((args) => {
+                if (tool === "docker" && Array.isArray(args)) {
+                    if (args.includes("load")) {
+                        dockerImageLoadedFromCache = true;
+                        dockerImageAvailable = true;
+                    }
+                    else if (args.includes("save")) {
+                        dockerImageSavedToCache = true;
+                    }
+                    else if (args.includes("pull")) {
+                        dockerImagePulled = true;
+                        dockerImageAvailable = true;
+                    }
+                }
+                return mockToolRunner;
+            }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            exec: sandbox.stub().callsFake(async (options) => {
+                if (tool === "npx") {
+                    capturedExecOptions = options;
+                    npxExecCalled = true;
+                }
+                return 0;
+            }),
+        };
+        return mockToolRunner;
+    });
+    sandbox.stub(tl, "setResult");
+    sandbox.stub(tl, "getVariable").returns("");
+    sandbox.stub(tl, "which").returns("/usr/bin/npx");
+    sandbox.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
+    sandbox.stub(tl, "mkdirP");
+    sandbox.stub(tl, "execSync").callsFake((tool, args) => {
+        if (tool === "docker" &&
+            Array.isArray(args) &&
+            args.includes("images") &&
+            args.includes("-q")) {
+            return {
+                code: 0,
+                stdout: dockerImageAvailable ? "mock-image-id-12345\n" : "",
+                stderr: "",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                error: undefined,
+            };
+        }
+        return {
+            code: 0,
+            stdout: "",
+            stderr: "",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error: undefined,
+        };
+    });
+    getInputStub = sandbox.stub(tl, "getInput");
+    getBoolInputStub = sandbox.stub(tl, "getBoolInput");
+    getInputStub.returns("");
+    getBoolInputStub.returns(false);
+    getInputStub.withArgs("flavor").returns("javascript");
+    getInputStub.withArgs("release").returns("v8");
+    result = null;
+    errorOccurred = false;
+    dockerImagePulled = false;
+    dockerImageLoadedFromCache = false;
+    dockerImageSavedToCache = false;
+    validateAllCodebaseSet = false;
+    validateAllCodebaseValue = "";
+});
+(0, cucumber_1.After)(function () {
+    sandbox.restore();
+});
+(0, cucumber_1.Given)("the input parameters are valid", async function () {
+    errorOccurred = false;
+});
+(0, cucumber_1.Given)("the input parameters are invalid", async function () {
+    errorOccurred = true;
+});
+(0, cucumber_1.Given)("docker image caching is enabled", async function () {
+    getBoolInputStub.withArgs("cacheDockerImage").returns(true);
+    getInputStub.withArgs("dockerCachePath").returns("/tmp/test-docker-cache");
+});
+(0, cucumber_1.Given)("docker image caching is disabled", async function () {
+    getBoolInputStub.withArgs("cacheDockerImage").returns(false);
+});
+(0, cucumber_1.Given)("lint changed files only is enabled", async function () {
+    getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
+});
+(0, cucumber_1.Given)("lint changed files only is disabled", async function () {
+    getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
+});
+(0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
+    dockerCacheTarballExists = false;
+});
+(0, cucumber_1.Given)("a cached docker image tarball exists", async function () {
+    dockerCacheTarballExists = true;
+});
+(0, cucumber_1.When)("the run function is called", async function () {
+    try {
+        if (errorOccurred)
+            throw new Error("Test error");
+        await (0, megalinter_1.run)();
+        if (capturedExecOptions && capturedExecOptions.env) {
+            const env = capturedExecOptions.env;
+            if ("VALIDATE_ALL_CODEBASE" in env) {
+                validateAllCodebaseSet = true;
+                validateAllCodebaseValue = env["VALIDATE_ALL_CODEBASE"];
+            }
+            else {
+                validateAllCodebaseSet = false;
+                validateAllCodebaseValue = "";
+            }
+        }
+        result = "success";
+    }
+    catch (error) {
+        if (error instanceof Error)
+            result = error.message;
+        else
+            result = "Unknown error occurred";
+    }
+});
+(0, cucumber_1.When)("the run function is called with a failing command", async function () {
+    try {
+        throw new Error("Test error");
+    }
+    catch (error) {
+        if (error instanceof Error)
+            result = error.message;
+        else
+            result = "Unknown error occurred";
+    }
+});
+(0, cucumber_1.Then)("the function should execute successfully", function () {
+    assert.strictEqual(result, "success", "Expected the function to execute successfully, but it did not.");
+});
+(0, cucumber_1.Then)("the function should fail with an error message", function () {
+    assert.strictEqual(result, "Test error", "Expected the function to fail with a specific error message, but it did not.");
+});
+(0, cucumber_1.Then)("the docker image should be pulled", function () {
+    assert.strictEqual(dockerImagePulled, true, "Expected the Docker image to be pulled, but it was not.");
+});
+(0, cucumber_1.Then)("the docker image should be saved to the cache path", function () {
+    assert.strictEqual(dockerImageSavedToCache, true, "Expected the Docker image to be saved to cache, but it was not.");
+});
+(0, cucumber_1.Then)("the docker image should be loaded from cache", function () {
+    assert.strictEqual(dockerImageLoadedFromCache, true, "Expected the Docker image to be loaded from cache, but it was not.");
+});
+(0, cucumber_1.Then)("the docker image should not be pulled", function () {
+    assert.strictEqual(dockerImagePulled, false, "Expected the Docker image to not be pulled, but it was.");
+});
+(0, cucumber_1.Then)("no docker image tarball should be saved", function () {
+    assert.strictEqual(dockerImageSavedToCache, false, "Expected no Docker image tarball to be saved, but one was.");
+});
+(0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should be set to false", function () {
+    assert.strictEqual(validateAllCodebaseSet, true, "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.");
+    assert.strictEqual(validateAllCodebaseValue, "false", "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " +
+        validateAllCodebaseValue);
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+    assert.ok(capturedExecOptions, "Expected exec options to be captured, but they were not.");
+    assert.ok(capturedExecOptions.env, "Expected env to be in exec options, but it was not.");
+});
+(0, cucumber_1.Then)("VALIDATE_ALL_CODEBASE environment variable should not be set", function () {
+    assert.strictEqual(validateAllCodebaseSet, false, "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " +
+        validateAllCodebaseValue);
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+});
