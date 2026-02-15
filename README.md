@@ -38,17 +38,18 @@ Configure MegaLinter using the Azure DevOps task assistant:
 
 ## Task Inputs
 
-| Input              | Description                                                 | Default              |
-| ------------------ | ----------------------------------------------------------- | -------------------- |
-| `flavor`           | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
-| `release`          | Docker image tag (v9, latest, etc.)                         | `v9`                 |
-| `fix`              | Auto-fix issues                                             | `false`              |
-| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
-| `createFixPR`      | Create PR with fixes (when fix=true)                        | `true`               |
-| `path`             | Directory to lint                                           | Pipeline workspace   |
-| `configFile`       | Path to .mega-linter.yml                                    | Auto-detected        |
-| `reportsPath`      | Reports output directory                                    | `megalinter-reports` |
-| `disableLinters`   | Comma-separated linters to disable                          | -                    |
+| Input                  | Description                                                 | Default              |
+| ---------------------- | ----------------------------------------------------------- | -------------------- |
+| `flavor`               | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
+| `release`              | Docker image tag (v9, latest, etc.)                         | `v9`                 |
+| `fix`                  | Auto-fix issues                                             | `false`              |
+| `enablePRComments`     | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
+| `createFixPR`          | Create PR with fixes (when fix=true)                        | `true`               |
+| `path`                 | Directory to lint                                           | Pipeline workspace   |
+| `configFile`           | Path to .mega-linter.yml                                    | Auto-detected        |
+| `reportsPath`          | Reports output directory                                    | `megalinter-reports` |
+| `disableLinters`       | Comma-separated linters to disable                          | -                    |
+| `lintChangedFilesOnly` | Only lint files changed in PR/commit                        | `false`              |
 
 See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 
@@ -67,7 +68,7 @@ See [all available inputs](https://megalinter.io/latest/configuration/) for the 
 
 ## Full Pipeline Example
 
-This example shows all available options with Docker caching for faster runs:
+This example shows all available options:
 
 ```yaml
 # .azuredevops/megalinter.yml
@@ -88,19 +89,6 @@ stages:
           - checkout: self
             fetchDepth: 0
 
-          # Cache Docker images for faster runs
-          - task: Cache@2
-            displayName: Cache Docker images
-            inputs:
-              key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
-              path: $(Pipeline.Workspace)/docker-cache
-
-          - script: |
-              if [ -f "$(Pipeline.Workspace)/docker-cache/megalinter.tar" ]; then
-                docker load -i $(Pipeline.Workspace)/docker-cache/megalinter.tar
-              fi
-            displayName: Load cached Docker image
-
           # Run MegaLinter
           - task: MegaLinter@1
             displayName: Run MegaLinter
@@ -114,13 +102,6 @@ stages:
               createFixPR: true
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-
-          # Save Docker image to cache
-          - script: |
-              mkdir -p $(Pipeline.Workspace)/docker-cache
-              docker save $(MEGALINTER_IMAGE) -o $(Pipeline.Workspace)/docker-cache/megalinter.tar
-            displayName: Save Docker image to cache
-            condition: succeededOrFailed()
 
           # Publish reports
           - task: PublishBuildArtifacts@1

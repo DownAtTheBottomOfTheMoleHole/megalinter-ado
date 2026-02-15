@@ -7,7 +7,7 @@ This document explains the versioning strategy used for the MegaLinter Azure Dev
 The extension uses an automatic versioning approach:
 
 - **PR builds**: Use 4-component versions (e.g., 1.1.7.29547613) for preview testing
-- **Main branch builds**: 
+- **Main branch builds**:
   - Private extension: 4-component version (e.g., 1.1.7.29547650) using epoch minutes
   - Public extension: 3-component version (e.g., 1.1.7)
   - Git tags: 3-component version with v prefix (e.g., v1.1.7)
@@ -28,6 +28,7 @@ When a pull request is created or updated:
 The 4th component is **epoch minutes** — the number of minutes since January 1, 1970 UTC (Unix epoch). This provides a monotonically increasing version that always stays within the TFX CLI's version component limit (0-2,147,483,647). Collisions are only possible if multiple PR runs start within the same minute, which is extremely rare in practice.
 
 **Why epoch minutes?**
+
 - Always monotonically increasing (newer builds always have higher version numbers)
 - Current value is ~29.5 million, well under the ~2.1 billion maximum
 - Provides sufficiently fine granularity for typical PR build frequency (collisions are only possible if multiple runs start within the same minute, which is rare in practice)
@@ -39,12 +40,14 @@ The 4th component is **epoch minutes** — the number of minutes since January 1
 When code is merged to main (automatic trigger):
 
 #### Private Extension (Internal Testing)
+
 - **Version Format**: `Major.Minor.Patch.EpochMinutes` (4 components)
 - **Example**: `1.1.7.29547613`
 - **Purpose**: Preview build with monotonically increasing 4th component
 - **Note**: Uses epoch minutes (same as PR builds) to ensure monotonic versioning since both PR and main branch builds publish to the same private extension ID
 
 #### Public Extension (Official Release)
+
 - **Version Format**: `Major.Minor.Patch` (3 components)
 - **Example**: `1.1.7`
 - **Purpose**: Official release version
