@@ -2,6 +2,7 @@ import { Given, When, Then, Before, After } from "@cucumber/cucumber";
 import * as assert from "assert";
 import * as sinon from "sinon";
 import * as tl from "azure-pipelines-task-lib/task";
+import * as tr from "azure-pipelines-task-lib/toolrunner";
 import { run } from "../../megalinter";
 
 let result: string | null = null;
@@ -11,199 +12,152 @@ let errorOccurred: boolean = false;
 let validateAllCodebaseSet: boolean = false;
 let validateAllCodebaseValue: string = "";
 
-// Docker caching test state (for old simulation-based tests)
+// Docker caching test state
 let dockerImagePulled: boolean = false;
 let dockerImageLoadedFromCache: boolean = false;
 let dockerImageSavedToCache: boolean = false;
-let dockerCacheTarballExists: boolean = false; // Track cache state
+let dockerCacheTarballExists: boolean = false;
+let dockerImageAvailable: boolean = false;
 
-// Sinon stubs for mocking (kept for cleanup via sinon.restore() in After hook)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _toolStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _execSyncStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _setResultStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _getInputStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _getBoolInputStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _existStub: sinon.SinonStub;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let _getVariableStub: sinon.SinonStub;
+let sandbox: sinon.SinonSandbox;
+let getInputStub: sinon.SinonStub;
+let getBoolInputStub: sinon.SinonStub;
+let npxExecCalled: boolean = false;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let capturedExecOptions: any = null;
 
-// Mock tool runner interface
-interface MockToolRunner {
-  arg: sinon.SinonStub;
-  exec: sinon.SinonStub;
-}
-
 Before(function () {
-  // Reset captured options and state before each scenario
+  sandbox = sinon.createSandbox();
   capturedExecOptions = null;
+  npxExecCalled = false;
   dockerCacheTarballExists = false;
-  
-  // Stub getInput and getBoolInput to return test values
-  _getInputStub = sinon.stub(tl, "getInput").callsFake((name: string) => {
-    const envKey = `INPUT_${name.toUpperCase()}`;
-    return process.env[envKey];
-  });
-  
-  _getBoolInputStub = sinon.stub(tl, "getBoolInput").callsFake((name: string) => {
-    const envKey = `INPUT_${name.toUpperCase()}`;
-    return process.env[envKey]?.toUpperCase() === "TRUE";
-  });
-  
-  // Stub getVariable to return undefined by default
-  _getVariableStub = sinon.stub(tl, "getVariable").returns(undefined);
-  
-  // Stub exist to check dockerCacheTarballExists variable
-  _existStub = sinon.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
-  
-  // Set required environment variables for tests
-  process.env["INPUT_FLAVOR"] = "all";
-  process.env["INPUT_RELEASE"] = "latest";
-  process.env["INPUT_FIX"] = "false";
-  process.env["INPUT_CREATEFIXPR"] = "false";
-  process.env["INPUT_ENABLEPRCOMMENTS"] = "false";
-  
-  // Stub setResult
-  _setResultStub = sinon.stub(tl, "setResult");
-  
-  // Stub execSync to return different values based on command
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _execSyncStub = sinon.stub(tl, "execSync").callsFake((tool: string, args?: any): any => {
-    // Check if this is a "docker images -q" command
-    if (tool === "docker" && Array.isArray(args) && args.includes("images") && args.includes("-q")) {
-      // Return image ID if cache exists, empty otherwise
-      return {
-        code: 0,
-        stdout: dockerCacheTarballExists ? "mock-image-id-12345\n" : "",
-        stderr: ""
-      };
-    }
-    
-    // Default: return success with empty output
-    return {
-      code: 0,
-      stdout: "",
-      stderr: ""
-    };
-  });
-  
-  // Create a factory for mock tool runners
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _toolStub = sinon.stub(tl, "tool").callsFake((tool: string): any => {
-    const mockToolRunner: MockToolRunner = {
+  dockerImageAvailable = false;
+
+  sandbox.stub(tl, "tool").callsFake((tool: string) => {
+    const mockToolRunner = {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      arg: sinon.stub().callsFake((args: any) => {
-        // Track docker operations
+      arg: sandbox.stub().callsFake((args: any) => {
         if (tool === "docker" && Array.isArray(args)) {
           if (args.includes("load")) {
             dockerImageLoadedFromCache = true;
+            dockerImageAvailable = true;
           } else if (args.includes("save")) {
             dockerImageSavedToCache = true;
           } else if (args.includes("pull")) {
             dockerImagePulled = true;
+            dockerImageAvailable = true;
           }
         }
         return mockToolRunner;
       }),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      exec: sinon.stub().callsFake(async (options: any) => {
-        // Capture exec options only for npx tool (the main MegaLinter execution)
+      exec: sandbox.stub().callsFake(async (options: any) => {
         if (tool === "npx") {
           capturedExecOptions = options;
+          npxExecCalled = true;
         }
-        return 0; // Success exit code
-      })
+        return 0;
+      }),
     };
-    
-    return mockToolRunner;
-  });
-});
 
-After(function () {
-  // Restore all stubs after each scenario
-  sinon.restore();
-  
-  // Clean up all environment variables set in Before hook and scenarios
-  delete process.env["INPUT_FLAVOR"];
-  delete process.env["INPUT_RELEASE"];
-  delete process.env["INPUT_FIX"];
-  delete process.env["INPUT_CREATEFIXPR"];
-  delete process.env["INPUT_ENABLEPRCOMMENTS"];
-  delete process.env["INPUT_LINTCHANGEDFILESONLY"];
-  delete process.env["INPUT_CACHEDOCKERIMAGE"];
-  delete process.env["INPUT_DOCKERCACHEPATH"];
-  
-  // Reset state variables
+    return mockToolRunner as unknown as tr.ToolRunner;
+  });
+
+  sandbox.stub(tl, "setResult");
+  sandbox.stub(tl, "getVariable").returns("");
+  sandbox.stub(tl, "which").returns("/usr/bin/npx");
+  sandbox.stub(tl, "exist").callsFake(() => dockerCacheTarballExists);
+  sandbox.stub(tl, "mkdirP");
+
+  sandbox.stub(tl, "execSync").callsFake((tool: string, args?: unknown) => {
+    if (
+      tool === "docker" &&
+      Array.isArray(args) &&
+      args.includes("images") &&
+      args.includes("-q")
+    ) {
+      return {
+        code: 0,
+        stdout: dockerImageAvailable ? "mock-image-id-12345\n" : "",
+        stderr: "",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        error: undefined as any,
+      };
+    }
+
+    return {
+      code: 0,
+      stdout: "",
+      stderr: "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      error: undefined as any,
+    };
+  });
+
+  getInputStub = sandbox.stub(tl, "getInput");
+  getBoolInputStub = sandbox.stub(tl, "getBoolInput");
+
+  getInputStub.returns("");
+  getBoolInputStub.returns(false);
+
+  getInputStub.withArgs("flavor").returns("javascript");
+  getInputStub.withArgs("release").returns("v8");
+
   result = null;
   errorOccurred = false;
   dockerImagePulled = false;
   dockerImageLoadedFromCache = false;
   dockerImageSavedToCache = false;
-  dockerCacheTarballExists = false;
   validateAllCodebaseSet = false;
   validateAllCodebaseValue = "";
-  capturedExecOptions = null;
+});
+
+After(function () {
+  sandbox.restore();
 });
 
 Given("the input parameters are valid", async function () {
-  // Test assumes valid inputs are available through environment variables
-  // In CI, the workflow sets INPUT_* environment variables
-  // We don't need to verify them here as the test is mocked in CI anyway
   errorOccurred = false;
 });
 
 Given("the input parameters are invalid", async function () {
-  // Mock invalid input parameters or set error flag directly
   errorOccurred = true;
 });
 
 Given("docker image caching is enabled", async function () {
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "true";
-  process.env["INPUT_DOCKERCACHEPATH"] = "/tmp/test-docker-cache";
+  getBoolInputStub.withArgs("cacheDockerImage").returns(true);
+  getInputStub.withArgs("dockerCachePath").returns("/tmp/test-docker-cache");
 });
 
 Given("docker image caching is disabled", async function () {
-  process.env["INPUT_CACHEDOCKERIMAGE"] = "false";
-  delete process.env["INPUT_DOCKERCACHEPATH"];
+  getBoolInputStub.withArgs("cacheDockerImage").returns(false);
 });
 
 Given("lint changed files only is enabled", async function () {
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "true";
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(true);
 });
 
 Given("lint changed files only is disabled", async function () {
-  process.env["INPUT_LINTCHANGEDFILESONLY"] = "false";
+  getBoolInputStub.withArgs("lintChangedFilesOnly").returns(false);
 });
 
 Given("no cached docker image tarball exists", async function () {
-  // Set cache state to false (tarball doesn't exist)
   dockerCacheTarballExists = false;
 });
 
 Given("a cached docker image tarball exists", async function () {
-  // Set cache state to true (tarball exists)
   dockerCacheTarballExists = true;
 });
 
 When("the run function is called", async function () {
   try {
     if (errorOccurred) throw new Error("Test error");
-    
-    // Call the actual run function with mocked tl.tool()
+
     await run();
-    
-    // Extract environment variables from captured exec options
+
     if (capturedExecOptions && capturedExecOptions.env) {
       const env = capturedExecOptions.env;
-      
-      // Check if VALIDATE_ALL_CODEBASE was set
+
       if ("VALIDATE_ALL_CODEBASE" in env) {
         validateAllCodebaseSet = true;
         validateAllCodebaseValue = env["VALIDATE_ALL_CODEBASE"];
@@ -212,7 +166,7 @@ When("the run function is called", async function () {
         validateAllCodebaseValue = "";
       }
     }
-    
+
     result = "success";
   } catch (error) {
     if (error instanceof Error) result = error.message;
@@ -222,7 +176,6 @@ When("the run function is called", async function () {
 
 When("the run function is called with a failing command", async function () {
   try {
-    // Simulate a failing command scenario
     throw new Error("Test error");
   } catch (error) {
     if (error instanceof Error) result = error.message;
@@ -292,12 +245,22 @@ Then(
     assert.strictEqual(
       validateAllCodebaseSet,
       true,
-      "Expected VALIDATE_ALL_CODEBASE to be set, but it was not.",
+      "Expected VALIDATE_ALL_CODEBASE to be set in the environment passed to exec, but it was not.",
     );
     assert.strictEqual(
       validateAllCodebaseValue,
       "false",
-      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was not.",
+      "Expected VALIDATE_ALL_CODEBASE to be set to 'false', but it was: " +
+        validateAllCodebaseValue,
+    );
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
+    assert.ok(
+      capturedExecOptions,
+      "Expected exec options to be captured, but they were not.",
+    );
+    assert.ok(
+      capturedExecOptions.env,
+      "Expected env to be in exec options, but it was not.",
     );
   },
 );
@@ -308,7 +271,9 @@ Then(
     assert.strictEqual(
       validateAllCodebaseSet,
       false,
-      "Expected VALIDATE_ALL_CODEBASE to not be set, but it was.",
+      "Expected VALIDATE_ALL_CODEBASE to not be set in the environment passed to exec, but it was set to: " +
+        validateAllCodebaseValue,
     );
+    assert.ok(npxExecCalled, "Expected npx exec to be called, but it was not.");
   },
 );
