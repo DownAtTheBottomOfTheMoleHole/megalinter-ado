@@ -1,6 +1,9 @@
+const path = require("path");
+
 module.exports = {
   default: {
-    require: ["features/step_definitions/run.steps.js"],
+    paths: [path.join(__dirname, "features/*.feature")],
+    require: [path.join(__dirname, "features/step_definitions/run.steps.js")],
     format: ["progress", "json:cucumber-report.json"],
   },
 };

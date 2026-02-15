@@ -38,19 +38,18 @@ Configure MegaLinter using the Azure DevOps task assistant:
 
 ## Task Inputs
 
-| Input              | Description                                                 | Default                                |
-| ------------------ | ----------------------------------------------------------- | -------------------------------------- |
-| `flavor`           | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                                  |
-| `release`          | Docker image tag (v9, latest, etc.)                         | `v9`                                   |
-| `fix`              | Auto-fix issues                                             | `false`                                |
-| `enablePRComments` | Post results as PR comments (auto-enabled for PR builds)    | `false`                                |
-| `createFixPR`      | Create PR with fixes (when fix=true)                        | `true`                                 |
-| `path`             | Directory to lint                                           | Pipeline workspace                     |
-| `configFile`       | Path to .mega-linter.yml                                    | Auto-detected                          |
-| `reportsPath`      | Reports output directory                                    | `megalinter-reports`                   |
-| `disableLinters`   | Comma-separated linters to disable                          | -                                      |
-| `cacheDockerImage` | Save/load Docker image as tarball for pipeline caching      | `false`                                |
-| `dockerCachePath`  | Directory for cached Docker image tarball                   | `$(Pipeline.Workspace)/docker-cache`   |
+| Input                  | Description                                                 | Default              |
+| ---------------------- | ----------------------------------------------------------- | -------------------- |
+| `flavor`               | MegaLinter flavor (all, javascript, python, security, etc.) | `all`                |
+| `release`              | Docker image tag (v9, latest, etc.)                         | `v9`                 |
+| `fix`                  | Auto-fix issues                                             | `false`              |
+| `enablePRComments`     | Post results as PR comments (auto-enabled for PR builds)    | `false`              |
+| `createFixPR`          | Create PR with fixes (when fix=true)                        | `true`               |
+| `path`                 | Directory to lint                                           | Pipeline workspace   |
+| `configFile`           | Path to .mega-linter.yml                                    | Auto-detected        |
+| `reportsPath`          | Reports output directory                                    | `megalinter-reports` |
+| `disableLinters`       | Comma-separated linters to disable                          | -                    |
+| `lintChangedFilesOnly` | Only lint files changed in PR/commit                        | `false`              |
 
 See [all available inputs](https://megalinter.io/latest/configuration/) for the complete list.
 
@@ -69,7 +68,7 @@ See [all available inputs](https://megalinter.io/latest/configuration/) for the 
 
 ## Full Pipeline Example
 
-This example shows all available options with built-in Docker caching for faster runs:
+This example shows all available options:
 
 ```yaml
 # .azuredevops/megalinter.yml
@@ -90,14 +89,7 @@ stages:
           - checkout: self
             fetchDepth: 0
 
-          # Cache Docker images using Azure Pipelines Cache task
-          - task: Cache@2
-            displayName: Cache Docker images
-            inputs:
-              key: 'docker | "$(Agent.OS)" | "$(MEGALINTER_IMAGE)"'
-              path: $(Pipeline.Workspace)/docker-cache
-
-          # Run MegaLinter with built-in Docker caching
+          # Run MegaLinter
           - task: MegaLinter@1
             displayName: Run MegaLinter
             inputs:
@@ -108,7 +100,6 @@ stages:
               removeContainer: true
               enablePRComments: true
               createFixPR: true
-              cacheDockerImage: true
             env:
               SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 
@@ -120,10 +111,6 @@ stages:
               pathToPublish: $(Build.SourcesDirectory)/megalinter-reports
               artifactName: megalinter-reports
 ```
-
-> **Note:** With `cacheDockerImage: true`, the task automatically loads a cached Docker image tarball
-> before pulling and saves it after a fresh pull. You only need the `Cache@2` task to persist the
-> tarball between pipeline runs — no manual `docker load` / `docker save` scripts required.
 
 ## Permissions
 

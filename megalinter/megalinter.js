@@ -214,17 +214,18 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         console.log(`Failed to commit fixes: ${commitResult.stderr}`);
         return;
     }
-    // Push the branch using the System.AccessToken via an HTTP header
-    // to avoid embedding the token in the remote URL or .git/config.
+    // Push the branch using the System.AccessToken via environment variable
+    // to avoid leaking the token in command-line arguments or process listings
+    tl.setSecret(accessToken);
     const extraHeader = `Authorization: Bearer ${accessToken}`;
-    const pushResult = tl.execSync("git", [
-        "-c",
-        `http.extraheader=${extraHeader}`,
-        "push",
-        "-u",
-        "origin",
-        fixBranchName,
-    ], { cwd: workingDir });
+    tl.setSecret(extraHeader);
+    const pushResult = tl.execSync("git", ["push", "-u", "origin", fixBranchName], {
+        cwd: workingDir,
+        env: {
+            ...process.env,
+            GIT_HTTP_EXTRAHEADER: extraHeader,
+        },
+    });
     if (pushResult.code !== 0) {
         console.log(`Failed to push fixes: ${pushResult.stderr}`);
         return;
@@ -376,7 +377,7 @@ async function run() {
             // Use a tarball name that is specific to the MegaLinter image (flavor + release)
             const flavorForCache = (tl.getInput("flavor") || "all").replace(/[^a-zA-Z0-9_.-]/g, "-");
             const releaseForCache = (tl.getInput("release") || "latest").replace(/[^a-zA-Z0-9_.-]/g, "-");
-            dockerCacheTarball = `${dockerCachePath}/megalinter-${flavorForCache}-${releaseForCache}.tar`;
+            dockerCacheTarball = path.join(dockerCachePath, `megalinter-${flavorForCache}-${releaseForCache}.tar`);
         }
         // If caching is enabled, attempt to load the Docker image from a cached tarball
         if (cacheDockerImage && dockerCacheTarball) {
@@ -400,14 +401,15 @@ async function run() {
                 console.log(`No cached Docker image found at: ${dockerCacheTarball}`);
             }
         }
+        // Track if image was freshly pulled (for cache save decision)
+        let imageWasPulled = false;
         // Check if the Docker image is already available in the local Docker cache
-        // This covers both self-hosted agent caching and tarball-loaded images
+        // This helps with caching when using self-hosted agents or Docker layer caching
         const dockerImageCheck = tl.execSync("docker", [
             "images",
             "-q",
             dockerImageName,
         ]);
-        let imageWasPulled = false;
         if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
             console.log(`Docker image '${dockerImageName}' found in cache. Skipping pull.`);
         }
@@ -478,6 +480,12 @@ async function run() {
         const disableLinters = tl.getInput("disableLinters");
         if (disableLinters) {
             execEnv["DISABLE_LINTERS"] = disableLinters;
+        }
+        // Enable linting only changed files
+        const lintChangedFilesOnly = tl.getBoolInput("lintChangedFilesOnly");
+        if (lintChangedFilesOnly) {
+            console.log("Linting changed files only - VALIDATE_ALL_CODEBASE will be set to false");
+            execEnv["VALIDATE_ALL_CODEBASE"] = "false";
         }
         // Use async exec for real-time streaming output
         const npxTool = tl.tool("npx");

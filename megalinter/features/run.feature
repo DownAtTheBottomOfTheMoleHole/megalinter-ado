@@ -18,14 +18,17 @@ Feature: Run function
     When the run function is called
     Then the function should fail with an error message
 
-  Scenario: Docker image caching enabled with no existing cache
-    Given docker image caching is enabled
-    And no cached docker image tarball exists
+  Scenario: Lint changed files only enabled
+    Given lint changed files only is enabled
     When the run function is called
-    Then the docker image should be pulled
-    And the docker image should be saved to the cache path
+    Then VALIDATE_ALL_CODEBASE environment variable should be set to false
 
-  Scenario: Docker image caching enabled with existing cache
+  Scenario: Lint changed files only disabled
+    Given lint changed files only is disabled
+    When the run function is called
+    Then VALIDATE_ALL_CODEBASE environment variable should not be set
+
+  Scenario: Docker image cache hit
     Given docker image caching is enabled
     And a cached docker image tarball exists
     When the run function is called

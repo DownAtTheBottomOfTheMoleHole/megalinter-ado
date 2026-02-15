@@ -223,20 +223,21 @@ async function handleFixPullRequest(
     return;
   }
 
-  // Push the branch using the System.AccessToken via an HTTP header
-  // to avoid embedding the token in the remote URL or .git/config.
+  // Push the branch using the System.AccessToken via environment variable
+  // to avoid leaking the token in command-line arguments or process listings
+  tl.setSecret(accessToken);
   const extraHeader = `Authorization: Bearer ${accessToken}`;
+  tl.setSecret(extraHeader);
   const pushResult = tl.execSync(
     "git",
-    [
-      "-c",
-      `http.extraheader=${extraHeader}`,
-      "push",
-      "-u",
-      "origin",
-      fixBranchName,
-    ],
-    { cwd: workingDir },
+    ["push", "-u", "origin", fixBranchName],
+    {
+      cwd: workingDir,
+      env: {
+        ...process.env,
+        GIT_HTTP_EXTRAHEADER: extraHeader,
+      },
+    },
   );
 
   if (pushResult.code !== 0) {
@@ -486,15 +487,17 @@ export async function run(): Promise<void> {
       }
     }
 
+    // Track if image was freshly pulled (for cache save decision)
+    let imageWasPulled = false;
+
     // Check if the Docker image is already available in the local Docker cache
-    // This covers both self-hosted agent caching and tarball-loaded images
+    // This helps with caching when using self-hosted agents or Docker layer caching
     const dockerImageCheck = tl.execSync("docker", [
       "images",
       "-q",
       dockerImageName,
     ]);
 
-    let imageWasPulled = false;
     if (dockerImageCheck.stdout && dockerImageCheck.stdout.trim()) {
       console.log(
         `Docker image '${dockerImageName}' found in cache. Skipping pull.`,
@@ -581,6 +584,15 @@ export async function run(): Promise<void> {
     const disableLinters = tl.getInput("disableLinters");
     if (disableLinters) {
       execEnv["DISABLE_LINTERS"] = disableLinters;
+    }
+
+    // Enable linting only changed files
+    const lintChangedFilesOnly = tl.getBoolInput("lintChangedFilesOnly");
+    if (lintChangedFilesOnly) {
+      console.log(
+        "Linting changed files only - VALIDATE_ALL_CODEBASE will be set to false",
+      );
+      execEnv["VALIDATE_ALL_CODEBASE"] = "false";
     }
 
     // Use async exec for real-time streaming output
