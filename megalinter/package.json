@@ -6,11 +6,7 @@
   },
   "description": "MegaLinter extension for Azure DevOps",
   "devDependencies": {
-    "@cucumber/cucumber": "12.6.0",
-    "@types/mocha": "10.0.10",
     "@types/node": "25.2.3",
-    "@types/q": "1.5.8",
-    "sync-request": "6.1.0",
     "ts-node": "10.9.2",
     "typescript": "5.9.3"
   },
@@ -27,9 +23,7 @@
   "main": "megalinter.js",
   "name": "megalinter",
   "scripts": {
-    "build": "tsc",
-    "lint": "eslint . --ext .ts",
-    "test": "mocha --require ts-node/register 'test/**/*.spec.ts'"
+    "build": "tsc"
   },
   "version": "1.0.0"
 }
