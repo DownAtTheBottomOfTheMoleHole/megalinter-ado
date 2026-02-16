@@ -18,13 +18,6 @@ Tests are written using Cucumber/BDD:
 - Feature files: `megalinter/features/*.feature`
 - Step definitions: `megalinter/features/step_definitions/*.ts`
 
-  );
-  }
-
-```
-
-This avoids unnecessary pulls when the image is already cached. Preserve this pattern when modifying Docker-related code.
-
 ### Built-in Docker Image Caching
 
 When `cacheDockerImage` is enabled:
@@ -70,9 +63,9 @@ steps:
 ```
 
 The task automatically:
-1. Loads `$(Pipeline.Workspace)/docker-cache/megalinter.tar` if it exists
+1. Loads `$(Pipeline.Workspace)/docker-cache/megalinter-<flavor>-<release>.tar` if it exists
 2. Skips `docker pull` when the image is already available
-3. Saves the image to the tarball after a fresh pull
+3. Saves the image to the flavor+release-specific tarball after a fresh pull
 
 No manual `docker load` / `docker save` scripts are required.
 

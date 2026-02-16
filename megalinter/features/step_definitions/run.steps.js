@@ -233,6 +233,9 @@ let capturedExecOptions = null;
     cacheFileExists = true;
     dockerImageExistsInDaemon = true;
 });
+(0, cucumber_1.Given)("no cached docker image tarball exists", async function () {
+    cacheFileExists = false;
+});
 (0, cucumber_1.Given)("docker image caching is disabled", async function () {
     getBoolInputStub.withArgs("cacheDockerImage").returns(false);
 });

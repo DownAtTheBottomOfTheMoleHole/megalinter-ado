@@ -10,9 +10,7 @@
   "devDependencies": {
     "@cucumber/cucumber": "12.6.0",
     "@eslint/js": "9.39.2",
-    "@types/mocha": "10.0.10",
     "@types/node": "25.2.3",
-    "@types/q": "1.5.8",
     "@types/sinon": "21.0.0",
     "eslint": "9.39.2",
     "nyc": "17.1.0",
@@ -35,10 +33,9 @@
     "audit": "npm audit",
     "build": "cd megalinter && tsc",
     "clean": "rm -rf node_modules/ && rm -rf build/",
-    "coverage": "nyc npm test",
+    "coverage": "nyc cucumber-js --config megalinter/cucumber.js",
     "format": "prettier --write .",
     "lint": "eslint .",
-    "posttest": "npm run coverage",
     "pretest": "npm run lint",
     "test": "cucumber-js --config megalinter/cucumber.js"
   }

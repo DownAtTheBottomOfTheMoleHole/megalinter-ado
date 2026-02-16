@@ -41,6 +41,13 @@ Feature: Run function
     Then the docker image should be pulled
     And no docker image tarball should be saved
 
+  Scenario: Docker image cache miss
+    Given docker image caching is enabled
+    And no cached docker image tarball exists
+    When the run function is called
+    Then the docker image should be pulled
+    And the docker image should be saved to the cache path
+
   Scenario: Docker image cache load fails but image exists locally
     Given docker image caching is enabled
     And a cached docker image tarball exists but is corrupted

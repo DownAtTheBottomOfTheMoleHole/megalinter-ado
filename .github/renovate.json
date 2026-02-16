@@ -87,9 +87,7 @@
       "matchPackageNames": [
         "typescript",
         "typescript-eslint",
-        "@types/node",
-        "@types/mocha",
-        "@types/q"
+        "@types/node"
       ],
       "groupName": "TypeScript tooling"
     },
@@ -98,7 +96,6 @@
       "matchPackageNames": [
         "@cucumber/cucumber",
         "nyc",
-        "sync-request",
         "ts-node"
       ],
       "groupName": "testing frameworks"

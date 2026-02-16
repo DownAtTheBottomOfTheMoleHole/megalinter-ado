@@ -259,6 +259,10 @@ Given("a cached docker image tarball exists", async function () {
   dockerImageExistsInDaemon = true;
 });
 
+Given("no cached docker image tarball exists", async function () {
+  cacheFileExists = false;
+});
+
 Given("docker image caching is disabled", async function () {
   getBoolInputStub.withArgs("cacheDockerImage").returns(false);
 });

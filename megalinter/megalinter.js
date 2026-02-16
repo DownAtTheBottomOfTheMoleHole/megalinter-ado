@@ -175,12 +175,8 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
     const accessToken = tl.getVariable("System.AccessToken");
     // Validate required variables
     if (!collectionUri || !project || !repoName || !accessToken) {
-        console.error("❌ Missing required Azure DevOps variables. Ensure System.AccessToken is enabled.");
-        console.error("Required variables:");
-        console.error(`  - System.CollectionUri: ${collectionUri ? "✓" : "✗"}`);
-        console.error(`  - System.TeamProject: ${project ? "✓" : "✗"}`);
-        console.error(`  - Build.Repository.Name: ${repoName ? "✓" : "✗"}`);
-        console.error(`  - System.AccessToken: ${accessToken ? "✓" : "✗"}`);
+        tl.warning("Missing required Azure DevOps variables for fix PR creation. Ensure System.AccessToken is enabled.");
+        tl.warning(`  System.CollectionUri: ${collectionUri ? "✓" : "✗"}, System.TeamProject: ${project ? "✓" : "✗"}, Build.Repository.Name: ${repoName ? "✓" : "✗"}, System.AccessToken: ${accessToken ? "✓" : "✗"}`);
         return;
     }
     // Get branch info
@@ -200,7 +196,7 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         cwd: workingDir,
     });
     if (checkoutResult.code !== 0) {
-        console.log(`Failed to create fix branch: ${checkoutResult.stderr}`);
+        tl.warning(`Failed to create fix branch: ${checkoutResult.stderr}`);
         return;
     }
     // Stage all changes
@@ -211,7 +207,7 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         cwd: workingDir,
     });
     if (commitResult.code !== 0) {
-        console.log(`Failed to commit fixes: ${commitResult.stderr}`);
+        tl.warning(`Failed to commit fixes: ${commitResult.stderr}`);
         return;
     }
     // Push the branch using the System.AccessToken via environment variable
@@ -227,7 +223,7 @@ async function handleFixPullRequest(workingDir, isPullRequest) {
         },
     });
     if (pushResult.code !== 0) {
-        console.log(`Failed to push fixes: ${pushResult.stderr}`);
+        tl.warning(`Failed to push fixes: ${pushResult.stderr}`);
         return;
     }
     console.log(`✅ Pushed fixes to branch: ${fixBranchName}`);
@@ -464,8 +460,11 @@ async function run() {
         if (shouldEnablePRComments) {
             console.log("Enabling Azure DevOps PR comment reporter");
             execEnv["AZURE_COMMENT_REPORTER"] = "true";
-            execEnv["SYSTEM_ACCESSTOKEN"] =
-                tl.getVariable("System.AccessToken") || "";
+            const prAccessToken = tl.getVariable("System.AccessToken") || "";
+            if (prAccessToken) {
+                tl.setSecret(prAccessToken);
+            }
+            execEnv["SYSTEM_ACCESSTOKEN"] = prAccessToken;
             execEnv["SYSTEM_COLLECTIONURI"] =
                 tl.getVariable("System.CollectionUri") || "";
             execEnv["SYSTEM_TEAMPROJECT"] =
