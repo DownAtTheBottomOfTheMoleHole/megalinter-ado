@@ -44,6 +44,12 @@ REPOSITORY_CHECKOV_ARGUMENTS:
   - "--include-all-checkov-policies" # settings to allow integration with bridgecrew using pipeline variables
 REPOSITORY_CHECKOV_DISABLE_ERRORS: false #Run linter but consider errors as warnings default to false
 REPOSITORY_CHECKOV_DISABLE_ERRORS_IF_LESS_THAN: 0 # Maximum number of errors allowed default is 0
+REPOSITORY_CHECKOV_PRE_COMMANDS:
+  - command: "mkdir -p ./megalinter-reports/sarif"
+    cwd: "workspace"
+REPOSITORY_CHECKOV_POST_COMMANDS:
+  - command: "mv -f ./megalinter-reports/results_sarif.sarif ./megalinter-reports/sarif/REPOSITORY_CHECKOV.sarif 2>/dev/null || true"
+    cwd: "workspace"
 REPOSITORY_DEVSKIM_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
 REPOSITORY_DEVSKIM_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
 REPOSITORY_DUSTILOCK_DISABLE_ERRORS: false #Run linter but consider errors as warnings	false
@@ -56,6 +62,12 @@ REPOSITORY_GITLEAKS_PRE_COMMANDS:
 REPOSITORY_KICS_CONFIG_FILE: LINTER_DEFAULT #kics configuration file nameUse LINTER_DEFAULT to let the linter find it DEFAULT: kics.config
 REPOSITORY_KICS_DISABLE_ERRORS: false #Run linter but consider errors as warnings DEFAULT: false
 REPOSITORY_KICS_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
+REPOSITORY_KICS_PRE_COMMANDS:
+  - command: "mkdir -p ./megalinter-reports/sarif"
+    cwd: "workspace"
+REPOSITORY_KICS_POST_COMMANDS:
+  - command: "mv -f ./megalinter-reports/kics-results.sarif ./megalinter-reports/sarif/REPOSITORY_KICS.sarif 2>/dev/null || true"
+    cwd: "workspace"
 REPOSITORY_KICS_RULES_PATH: .config #Path where to find linter configuration file DEFAULT: Workspace folder, then MegaLinter default rules
 REPOSITORY_KINGFISHER_DISABLE_ERRORS: false #Run linter and fail on errors; use --exclude args since FILTER_REGEX_EXCLUDE has no effect on project-level linters
 REPOSITORY_KINGFISHER_DISABLE_ERRORS_IF_LESS_THAN: 0 #Maximum number of errors allowed DEFAULT: 0
