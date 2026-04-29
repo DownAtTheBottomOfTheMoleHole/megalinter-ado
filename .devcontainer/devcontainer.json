@@ -3,7 +3,7 @@
   "image": "mcr.microsoft.com/devcontainers/typescript-node:4-20-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/node:1": {
+    "ghcr.io/devcontainers/features/node:2": {
       "version": "24"
     }
   },
