@@ -89,7 +89,7 @@ jobs:
           echo "Building PR version: ${{ env.GitVersion_Major }}.${{ env.GitVersion_Minor }}.${{ env.GitVersion_Patch }}.${EPOCH_MINUTES}"
 
       - name: Replace tokens in task.json
-        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
+        uses: cschleiden/replace-tokens@63252851d87eb5cb853019ba8538b5c51813779d # v1
         with:
           files: "megalinter/task.json"
           tokenPrefix: "#{"
@@ -106,7 +106,7 @@ jobs:
           patch: ${{ env.GitVersion_Patch }}
 
       - name: Replace tokens in vss-extension.json
-        uses: cschleiden/replace-tokens@4d5a042c84c3568b3858b7af9394923d2d5195c9 # v1
+        uses: cschleiden/replace-tokens@63252851d87eb5cb853019ba8538b5c51813779d # v1
         with:
           files: "vss-extension.json"
           tokenPrefix: "#{"
