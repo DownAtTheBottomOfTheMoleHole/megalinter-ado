@@ -2,8 +2,6 @@
 
 ![Down At The Bottom Of The Mole Hole banner](.assets/org-banner.png)
 
-![Down At The Bottom Of The Mole Hole icon](.assets/extension-icon.png)
-
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-MegaLinter-blue?logo=azure-devops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.megalinter-ado)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE.md)
 [![MegaLinter](https://img.shields.io/badge/MegaLinter-v9-success)](https://megalinter.io)
