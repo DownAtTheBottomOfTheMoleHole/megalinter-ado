@@ -1,6 +1,6 @@
 {
   "branding": {
-    "color": "rgb(32, 68, 134)",
+    "color": "#0a0604",
     "theme": "dark"
   },
   "categories": ["Azure Pipelines"],
