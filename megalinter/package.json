@@ -16,7 +16,7 @@
   },
   "overrides": {
     "minimatch": "10.2.5",
-    "tar": "7.5.15"
+    "tar": "7.5.16"
   },
   "keywords": [
     "mega-linter",
