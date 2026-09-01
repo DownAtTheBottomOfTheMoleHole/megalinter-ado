@@ -5,7 +5,7 @@
   "author": "DownAtTheBottomOfTheMoleHole",
   "dependencies": {
     "azure-pipelines-task-lib": "5.278.2",
-    "mega-linter-runner": "9.6.0"
+    "mega-linter-runner": "10.0.0"
   },
   "devDependencies": {
     "@cucumber/cucumber": "13.2.1",
