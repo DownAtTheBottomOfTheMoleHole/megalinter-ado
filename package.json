@@ -4,7 +4,7 @@
   "description": "MegaLinter Azure DevOps Extension",
   "author": "DownAtTheBottomOfTheMoleHole",
   "dependencies": {
-    "azure-pipelines-task-lib": "5.278.2",
+    "azure-pipelines-task-lib": "5.279.0",
     "mega-linter-runner": "10.0.0"
   },
   "devDependencies": {
