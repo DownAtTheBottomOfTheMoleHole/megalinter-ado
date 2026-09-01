@@ -12,7 +12,7 @@
     "@eslint/js": "10.0.1",
     "@types/node": "25.9.5",
     "@types/sinon": "22.0.0",
-    "eslint": "10.8.1",
+    "eslint": "10.9.1",
     "nyc": "18.0.0",
     "prettier": "3.9.6",
     "sinon": "22.1.0",
