@@ -2,7 +2,7 @@
   "author": "DownAtTheBottomOfTheMoleHole",
   "dependencies": {
     "azure-pipelines-task-lib": "^5.2.5",
-    "mega-linter-runner": "^9.3.0"
+    "mega-linter-runner": "^10.0.0"
   },
   "description": "MegaLinter extension for Azure DevOps",
   "devDependencies": {
@@ -15,7 +15,7 @@
     "npm": ">=10.0.0"
   },
   "overrides": {
-    "minimatch": "10.2.5",
+    "minimatch": "10.2.6",
     "tar": "7.5.20"
   },
   "keywords": [
