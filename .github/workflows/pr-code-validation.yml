@@ -57,9 +57,13 @@ jobs:
     name: Publish Private Extension
     runs-on: ubuntu-latest
     needs: build-and-test
-    # Only run if PR is from the same repository (not a fork)
-    # This prevents exposing secrets to untrusted PR code from forks
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    # Only publish non-draft, human-authored PRs from this repository.
+    # Dependency-bot PRs keep validation but must not receive publishing secrets.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      !github.event.pull_request.draft &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      github.event.pull_request.user.login != 'renovate[bot]'
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
