@@ -1,6 +1,6 @@
 # MegaLinter Azure DevOps Extension
 
-![Down At The Bottom Of The Mole Hole banner](.assets/org-banner.png)
+[![Down At The Bottom Of The Mole Hole banner](https://raw.githubusercontent.com/DownAtTheBottomOfTheMoleHole/.github/main/assets/banners/repositories/megalinter-ado.png)](https://github.com/DownAtTheBottomOfTheMoleHole)
 
 [![Visual Studio Marketplace](https://img.shields.io/badge/Marketplace-MegaLinter-blue?logo=azure-devops)](https://marketplace.visualstudio.com/items?itemName=DownAtTheBottomOfTheMoleHole.megalinter-ado)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](LICENSE.md)
