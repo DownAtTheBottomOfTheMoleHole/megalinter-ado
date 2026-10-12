@@ -8,7 +8,7 @@
     "mega-linter-runner": "10.1.0"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "13.2.1",
+    "@cucumber/cucumber": "13.3.0",
     "@eslint/js": "10.0.1",
     "@types/node": "25.9.9",
     "@types/sinon": "22.0.0",
