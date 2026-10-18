@@ -7,6 +7,7 @@
   "description": "MegaLinter extension for Azure DevOps",
   "devDependencies": {
     "@types/node": "25.9.9",
+    "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "ts-node": "10.9.2",
     "typescript": "7.0.2"
   },
@@ -27,7 +28,8 @@
   "main": "megalinter.js",
   "name": "megalinter",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "build:native": "tsgo --module Node16 --moduleResolution Node16"
   },
   "version": "1.0.0"
 }

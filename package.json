@@ -17,7 +17,7 @@
     "prettier": "3.9.10",
     "sinon": "22.1.0",
     "ts-node": "10.9.2",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.71.2"
   },
   "engines": {
@@ -32,6 +32,7 @@
   "scripts": {
     "audit": "npm audit",
     "build": "cd megalinter && tsc",
+    "build:native": "npm --prefix megalinter run build:native",
     "clean": "rm -rf node_modules/ && rm -rf build/",
     "coverage": "nyc cucumber-js --config megalinter/cucumber.js",
     "format": "prettier --write .",
