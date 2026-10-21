@@ -32,6 +32,7 @@
   "scripts": {
     "audit": "npm audit",
     "build": "cd megalinter && tsc",
+    "build:native": "npm --prefix megalinter run build:native",
     "clean": "rm -rf node_modules/ && rm -rf build/",
     "coverage": "nyc cucumber-js --config megalinter/cucumber.js",
     "format": "prettier --write .",
