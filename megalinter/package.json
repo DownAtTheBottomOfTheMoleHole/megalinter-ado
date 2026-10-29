@@ -6,7 +6,7 @@
   },
   "description": "MegaLinter extension for Azure DevOps",
   "devDependencies": {
-    "@types/node": "25.9.9",
+    "@types/node": "26.6.5",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
     "ts-node": "10.9.2",
     "typescript": "7.0.2"
