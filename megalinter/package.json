@@ -16,7 +16,7 @@
     "npm": ">=10.0.0"
   },
   "overrides": {
-    "minimatch": "11.0.3",
+    "minimatch": "11.0.4",
     "tar": "7.5.22"
   },
   "keywords": [
